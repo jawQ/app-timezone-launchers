@@ -34,6 +34,21 @@ open "/Applications/ZoneLaunch.app"
 `build-app.sh` 会创建并以 ad-hoc 方式签名可分发 `.app`。`/Applications/ZoneLaunch.app`
 中的安装副本是构建产物，不是 Git 工作区。请在本仓库修改代码、重新构建，需要时再替换已安装 App。
 
+### 每次改动后：自动重新构建并安装
+
+只要改动了 macOS App（Swift 源码、资源、`Package.swift` 或构建/安装脚本），**结束时必须重新
+构建并安装**，保证 `/Applications/ZoneLaunch.app` 与工作区一致：
+
+```bash
+cd macos/AppTimezoneLauncher
+swift test
+./scripts/build-app.sh
+./scripts/install-app.sh
+```
+
+在每个完成的改动集末尾执行，而不是只在提交前执行。仅文档类、或明确不影响已安装 App 的改动
+可以跳过。
+
 ## 编码风格与命名规范
 
 使用 Swift 6 和 macOS 14 API。遵循 `swift-format`；现有 Swift 代码使用两个空格缩进。

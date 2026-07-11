@@ -137,4 +137,33 @@ public struct LauncherConfiguration: Codable, Equatable, Sendable {
   public func entries(for groupID: UUID) -> [LauncherEntry] {
     entries.filter { $0.groupID == groupID }
   }
+
+  /// Removes a single launcher entry from its time zone group.
+  /// Does not uninstall the macOS app; only drops the ZoneLaunch record.
+  /// If the managed app is no longer referenced by any entry, it is pruned.
+  public mutating func removeEntry(id: UUID) {
+    guard entries.contains(where: { $0.id == id }) else { return }
+    entries.removeAll { $0.id == id }
+    pruneOrphanedApps()
+  }
+
+  /// Removes a time zone group and every entry assigned to it.
+  /// Managed apps that become unreferenced are pruned from configuration.
+  public mutating func removeGroup(id: UUID) {
+    guard groups.contains(where: { $0.id == id }) else { return }
+    entries.removeAll { $0.groupID == id }
+    groups.removeAll { $0.id == id }
+    pruneOrphanedApps()
+  }
+
+  /// Removes every entry for an app and the managed app record itself.
+  public mutating func removeAppEverywhere(id: UUID) {
+    entries.removeAll { $0.managedAppID == id }
+    apps.removeAll { $0.id == id }
+  }
+
+  private mutating func pruneOrphanedApps() {
+    let referencedIDs = Set(entries.map(\.managedAppID))
+    apps.removeAll { !referencedIDs.contains($0.id) }
+  }
 }

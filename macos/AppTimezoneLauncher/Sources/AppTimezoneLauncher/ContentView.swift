@@ -5,18 +5,29 @@ import SwiftUI
 struct ContentView: View {
   @StateObject private var model = LauncherViewModel()
   @State private var showingAddTimezone = false
+  @State private var groupPendingDeletion: TimezoneGroup?
 
   var body: some View {
     HStack(spacing: 0) {
       SidebarView(
         groups: model.sortedGroups,
         selectedGroupID: $model.selectedGroupID,
-        showingAddTimezone: $showingAddTimezone
+        showingAddTimezone: $showingAddTimezone,
+        onDeleteGroup: { group in
+          groupPendingDeletion = group
+        }
       )
 
-      Divider()
+      Rectangle()
+        .fill(Color.primary.opacity(0.08))
+        .frame(width: 1)
 
-      MainPanelView(model: model)
+      MainPanelView(
+        model: model,
+        onDeleteGroup: { group in
+          groupPendingDeletion = group
+        }
+      )
     }
     .background(Color(nsColor: .windowBackgroundColor))
     .toolbar {
@@ -26,6 +37,7 @@ struct ContentView: View {
         } label: {
           Label("Add Time Zone", systemImage: "plus")
         }
+        .help("Add a time zone group")
       }
     }
     .sheet(isPresented: $showingAddTimezone) {
@@ -44,59 +56,162 @@ struct ContentView: View {
     } message: {
       Text(model.alertMessage ?? "")
     }
+    .alert(
+      "Delete Time Zone?",
+      isPresented: Binding(
+        get: { groupPendingDeletion != nil },
+        set: { if !$0 { groupPendingDeletion = nil } }
+      ),
+      presenting: groupPendingDeletion
+    ) { group in
+      Button("Cancel", role: .cancel) {
+        groupPendingDeletion = nil
+      }
+      Button("Delete", role: .destructive) {
+        model.removeTimezoneGroup(group)
+        groupPendingDeletion = nil
+      }
+    } message: { group in
+      let appCount = model.configuration.entries(for: group.id).count
+      if appCount == 0 {
+        Text("Delete “\(group.name)”? This only removes the group from ZoneLaunch.")
+      } else {
+        Text(
+          "Delete “\(group.name)” and remove \(appCount) app record\(appCount == 1 ? "" : "s") from this group? Installed apps on your Mac are not affected."
+        )
+      }
+    }
   }
 }
+
+// MARK: - Sidebar
 
 private struct SidebarView: View {
   let groups: [TimezoneGroup]
   @Binding var selectedGroupID: UUID?
   @Binding var showingAddTimezone: Bool
+  let onDeleteGroup: (TimezoneGroup) -> Void
 
   var body: some View {
-    VStack(alignment: .leading, spacing: 12) {
-      Text("Time Zones")
-        .font(.caption)
-        .foregroundStyle(.secondary)
-        .padding(.horizontal, 14)
-        .padding(.top, 18)
+    VStack(alignment: .leading, spacing: 0) {
+      HStack(spacing: 8) {
+        Image(systemName: "globe.badge.clock")
+          .font(.system(size: 13, weight: .semibold))
+          .foregroundStyle(ZoneTheme.accent)
+        Text("Time Zones")
+          .font(.system(size: 12, weight: .semibold))
+          .foregroundStyle(.secondary)
+          .textCase(.uppercase)
+          .tracking(0.4)
+      }
+      .padding(.horizontal, 16)
+      .padding(.top, 18)
+      .padding(.bottom, 10)
 
       List(selection: $selectedGroupID) {
         ForEach(groups) { group in
-          VStack(alignment: .leading, spacing: 3) {
-            Text(group.name)
-              .font(.system(size: 13, weight: .medium))
-            Text(group.ianaTimezone)
-              .font(.caption)
-              .foregroundStyle(.secondary)
+          SidebarRow(group: group, isSelected: selectedGroupID == group.id)
+            .tag(group.id as UUID?)
+            .listRowInsets(EdgeInsets(top: 3, leading: 8, bottom: 3, trailing: 8))
+            .contextMenu {
+              Button("Delete Time Zone", role: .destructive) {
+                onDeleteGroup(group)
+              }
+            }
+        }
+        .onDelete { indexSet in
+          for index in indexSet {
+            guard groups.indices.contains(index) else { continue }
+            onDeleteGroup(groups[index])
           }
-          .padding(.vertical, 4)
-          .tag(group.id as UUID?)
         }
       }
       .listStyle(.sidebar)
+      .scrollContentBackground(.hidden)
+
+      Divider()
+        .opacity(0.5)
 
       Button {
         showingAddTimezone = true
       } label: {
-        Label("Add Time Zone", systemImage: "plus")
+        Label("Add Time Zone", systemImage: "plus.circle.fill")
+          .font(.system(size: 13, weight: .medium))
           .frame(maxWidth: .infinity, alignment: .leading)
+          .padding(.vertical, 4)
       }
-      .buttonStyle(.borderless)
-      .padding(.horizontal, 14)
-      .padding(.bottom, 14)
+      .buttonStyle(.plain)
+      .foregroundStyle(ZoneTheme.accent)
+      .padding(.horizontal, 16)
+      .padding(.vertical, 12)
     }
-    .frame(width: 220)
+    .frame(width: ZoneTheme.sidebarWidth)
     .background(Color(nsColor: .controlBackgroundColor))
   }
 }
 
+private struct SidebarRow: View {
+  let group: TimezoneGroup
+  let isSelected: Bool
+
+  var body: some View {
+    HStack(spacing: 10) {
+      RoundedRectangle(cornerRadius: 1.5, style: .continuous)
+        .fill(isSelected ? ZoneTheme.accent : Color.clear)
+        .frame(width: 3, height: 28)
+
+      VStack(alignment: .leading, spacing: 3) {
+        Text(group.name)
+          .font(.system(size: 13, weight: isSelected ? .semibold : .medium))
+          .foregroundStyle(.primary)
+          .lineLimit(1)
+
+        HStack(spacing: 6) {
+          Text(group.ianaTimezone)
+            .font(.system(size: 11))
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
+
+          Text(TimezoneDisplay.utcOffsetLabel(for: group.ianaTimezone))
+            .font(.system(size: 10, weight: .medium, design: .rounded))
+            .foregroundStyle(isSelected ? ZoneTheme.accent : .secondary)
+            .padding(.horizontal, 5)
+            .padding(.vertical, 1)
+            .background(
+              Capsule(style: .continuous)
+                .fill(isSelected ? ZoneTheme.accentSoft : Color.primary.opacity(0.06))
+            )
+        }
+      }
+
+      Spacer(minLength: 0)
+    }
+    .padding(.vertical, 6)
+    .padding(.trailing, 6)
+    .background(
+      RoundedRectangle(cornerRadius: 8, style: .continuous)
+        .fill(isSelected ? ZoneTheme.accentSoft : Color.clear)
+    )
+  }
+}
+
+// MARK: - Main panel
+
 private struct MainPanelView: View {
   @ObservedObject var model: LauncherViewModel
+  var onDeleteGroup: (TimezoneGroup) -> Void
 
   var body: some View {
     VStack(spacing: 0) {
       if let group = model.selectedGroup {
-        HeaderView(group: group)
+        HeaderView(
+          group: group,
+          onDeleteGroup: { onDeleteGroup(group) }
+        )
+
+        Rectangle()
+          .fill(Color.primary.opacity(0.06))
+          .frame(height: 1)
 
         if model.selectedEntries.isEmpty {
           DropZoneView(model: model)
@@ -105,11 +220,15 @@ private struct MainPanelView: View {
           AppGridView(model: model)
         }
       } else {
-        ContentUnavailableView(
-          "No Time Zone",
-          systemImage: "clock.badge.questionmark",
-          description: Text("Create a time zone group before adding apps.")
-        )
+        ContentUnavailableView {
+          Label("No Time Zone", systemImage: "clock.badge.questionmark")
+        } description: {
+          Text("Create a time zone group before adding apps.")
+        } actions: {
+          // Toolbar / sidebar already expose add; keep empty actions for balance.
+        }
+        .symbolRenderingMode(.hierarchical)
+        .foregroundStyle(ZoneTheme.accent, .secondary)
       }
     }
   }
@@ -117,52 +236,111 @@ private struct MainPanelView: View {
 
 private struct HeaderView: View {
   let group: TimezoneGroup
+  let onDeleteGroup: () -> Void
+  @State private var now = Date()
+
+  private let timer = Timer.publish(every: 15, on: .main, in: .common).autoconnect()
 
   var body: some View {
-    HStack {
-      VStack(alignment: .leading, spacing: 3) {
+    HStack(alignment: .center, spacing: 16) {
+      VStack(alignment: .leading, spacing: 4) {
         Text(group.name)
-          .font(.title3.weight(.semibold))
-        Text(group.ianaTimezone)
-          .font(.callout)
+          .font(.system(size: 20, weight: .semibold, design: .rounded))
+        HStack(spacing: 8) {
+          Image(systemName: "globe")
+            .font(.system(size: 11, weight: .medium))
+            .foregroundStyle(ZoneTheme.accent)
+          Text(group.ianaTimezone)
+            .font(.system(size: 13))
+            .foregroundStyle(.secondary)
+          Text(TimezoneDisplay.utcOffsetLabel(for: group.ianaTimezone))
+            .font(.system(size: 11, weight: .semibold, design: .rounded))
+            .foregroundStyle(ZoneTheme.accent)
+            .padding(.horizontal, 7)
+            .padding(.vertical, 2)
+            .background(Capsule(style: .continuous).fill(ZoneTheme.accentSoft))
+        }
+      }
+
+      Spacer(minLength: 12)
+
+      VStack(alignment: .trailing, spacing: 4) {
+        Text(TimezoneDisplay.currentTime(for: group.ianaTimezone, at: now))
+          .font(.system(size: 28, weight: .medium, design: .rounded))
+          .monospacedDigit()
+          .foregroundStyle(ZoneTheme.accent)
+        Text(TimezoneDisplay.currentDate(for: group.ianaTimezone, at: now))
+          .font(.system(size: 12))
           .foregroundStyle(.secondary)
       }
-      Spacer()
-      Label("Drop .app files anywhere below", systemImage: "arrow.down.app")
-        .font(.caption)
-        .foregroundStyle(.secondary)
+
+      Menu {
+        Button("Delete Time Zone", role: .destructive) {
+          onDeleteGroup()
+        }
+      } label: {
+        Image(systemName: "ellipsis.circle")
+          .font(.system(size: 16, weight: .medium))
+          .foregroundStyle(.secondary)
+      }
+      .menuStyle(.borderlessButton)
+      .frame(width: 28, height: 28)
+      .help("Time zone actions")
     }
-    .padding(.horizontal, 24)
-    .padding(.vertical, 18)
+    .padding(.horizontal, ZoneTheme.contentPadding)
+    .padding(.vertical, 16)
     .background(Color(nsColor: .windowBackgroundColor))
+    .onReceive(timer) { value in
+      now = value
+    }
   }
 }
+
+// MARK: - Drop zone
 
 private struct DropZoneView: View {
   @ObservedObject var model: LauncherViewModel
   @State private var isTargeted = false
 
   var body: some View {
-    VStack(spacing: 18) {
+    VStack(spacing: 20) {
       ZStack {
-        RoundedRectangle(cornerRadius: 24)
-          .stroke(
-            style: StrokeStyle(lineWidth: 4, dash: [12, 10])
+        RoundedRectangle(cornerRadius: 28, style: .continuous)
+          .fill(isTargeted ? ZoneTheme.accentSoftStrong : ZoneTheme.accentSoft.opacity(0.45))
+          .frame(width: 168, height: 168)
+
+        RoundedRectangle(cornerRadius: 28, style: .continuous)
+          .strokeBorder(
+            isTargeted ? ZoneTheme.accent : ZoneTheme.accent.opacity(0.35),
+            style: StrokeStyle(lineWidth: isTargeted ? 2.5 : 2, dash: [11, 8])
           )
-          .foregroundStyle(isTargeted ? Color.accentColor : Color.secondary.opacity(0.42))
-          .frame(width: 170, height: 170)
+          .frame(width: 168, height: 168)
 
-        Image(systemName: "app")
-          .font(.system(size: 64, weight: .light))
-          .foregroundStyle(isTargeted ? Color.accentColor : Color.secondary.opacity(0.55))
+        Image(systemName: isTargeted ? "plus.app.fill" : "square.and.arrow.down")
+          .font(.system(size: 52, weight: .light))
+          .foregroundStyle(ZoneTheme.accent.opacity(isTargeted ? 1 : 0.75))
+          .symbolRenderingMode(.hierarchical)
       }
+      .scaleEffect(isTargeted ? 1.03 : 1)
+      .animation(.easeOut(duration: 0.15), value: isTargeted)
 
-      Text("Drop your apps here")
-        .font(.system(size: 34, weight: .light))
-        .foregroundStyle(.secondary)
+      VStack(spacing: 8) {
+        Text("Drop your apps here")
+          .font(.system(size: 26, weight: .medium, design: .rounded))
+          .foregroundStyle(.primary.opacity(0.85))
+
+        Text("Apps will launch with this time zone injected.")
+          .font(.system(size: 13))
+          .foregroundStyle(.secondary)
+      }
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .contentShape(Rectangle())
+    .background(
+      isTargeted
+        ? ZoneTheme.accentSoft.opacity(0.5)
+        : Color.clear
+    )
     .onDrop(of: [.fileURL], isTargeted: $isTargeted) { providers in
       handleDrop(providers)
     }
@@ -173,15 +351,16 @@ private struct DropZoneView: View {
       model.addApp(from: url)
     }
   }
-
 }
+
+// MARK: - App grid
 
 private struct AppGridView: View {
   @ObservedObject var model: LauncherViewModel
   @State private var isTargeted = false
 
   private let columns = [
-    GridItem(.adaptive(minimum: 210, maximum: 260), spacing: 16)
+    GridItem(.adaptive(minimum: 220, maximum: 280), spacing: 16)
   ]
 
   var body: some View {
@@ -191,9 +370,10 @@ private struct AppGridView: View {
           AppCardView(model: model, entry: entry, app: app)
         }
       }
-      .padding(24)
+      .padding(ZoneTheme.contentPadding)
     }
-    .background(isTargeted ? Color.accentColor.opacity(0.08) : Color.clear)
+    .background(isTargeted ? ZoneTheme.accentSoft : Color.clear)
+    .animation(.easeOut(duration: 0.15), value: isTargeted)
     .onDrop(of: [.fileURL], isTargeted: $isTargeted) { providers in
       handleDrop(providers)
     }
@@ -204,43 +384,67 @@ private struct AppGridView: View {
       model.addApp(from: url)
     }
   }
-
 }
 
 private struct AppCardView: View {
   @ObservedObject var model: LauncherViewModel
   let entry: LauncherEntry
   let app: ManagedApp
+  @State private var isHovered = false
 
   var body: some View {
     VStack(alignment: .leading, spacing: 14) {
-      HStack(spacing: 12) {
+      HStack(alignment: .top, spacing: 12) {
         Image(nsImage: NSWorkspace.shared.icon(forFile: app.appPath))
           .resizable()
-          .frame(width: 44, height: 44)
+          .interpolation(.high)
+          .frame(width: 48, height: 48)
+          .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+          .shadow(color: .black.opacity(0.12), radius: 3, x: 0, y: 1)
 
         VStack(alignment: .leading, spacing: 3) {
           Text(app.displayName)
-            .font(.headline)
+            .font(.system(size: 14, weight: .semibold))
             .lineLimit(1)
           Text(shortPath(app.appPath))
-            .font(.caption)
+            .font(.system(size: 11))
             .foregroundStyle(.secondary)
             .lineLimit(1)
+            .truncationMode(.middle)
         }
+
+        Spacer(minLength: 4)
+
+        Button {
+          model.remove(entry: entry)
+        } label: {
+          Image(systemName: "xmark.circle.fill")
+            .font(.system(size: 16))
+            .symbolRenderingMode(.hierarchical)
+            .foregroundStyle(.secondary)
+        }
+        .buttonStyle(.plain)
+        .opacity(isHovered ? 1 : 0.35)
+        .help("Remove from this time zone")
+        .accessibilityLabel("Remove \(app.displayName) from this time zone")
       }
 
       Button {
         model.launch(entry: entry, app: app)
       } label: {
         Label("Launch", systemImage: "play.fill")
+          .font(.system(size: 13, weight: .semibold))
           .frame(maxWidth: .infinity)
+          .padding(.vertical, 2)
       }
       .buttonStyle(.borderedProminent)
+      .tint(ZoneTheme.accent)
       .controlSize(.large)
     }
-    .padding(16)
-    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+    .zoneCardStyle()
+    .scaleEffect(isHovered ? 1.015 : 1)
+    .animation(.easeOut(duration: 0.12), value: isHovered)
+    .onHover { isHovered = $0 }
     .contextMenu {
       Button("Reveal in Finder") {
         model.revealInFinder(app)
@@ -257,5 +461,36 @@ private struct AppCardView: View {
 
   private func shortPath(_ path: String) -> String {
     path.replacingOccurrences(of: NSHomeDirectory(), with: "~")
+  }
+}
+
+// MARK: - Timezone display helpers
+
+enum TimezoneDisplay {
+  static func utcOffsetLabel(for iana: String, at date: Date = Date()) -> String {
+    guard let tz = TimeZone(identifier: iana) else { return "UTC?" }
+    let seconds = tz.secondsFromGMT(for: date)
+    let hours = seconds / 3600
+    let minutes = abs(seconds / 60) % 60
+    if minutes == 0 {
+      return String(format: "UTC%+d", hours)
+    }
+    return String(format: "UTC%+d:%02d", hours, minutes)
+  }
+
+  static func currentTime(for iana: String, at date: Date) -> String {
+    let formatter = DateFormatter()
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.timeZone = TimeZone(identifier: iana) ?? .current
+    formatter.dateFormat = "HH:mm"
+    return formatter.string(from: date)
+  }
+
+  static func currentDate(for iana: String, at date: Date) -> String {
+    let formatter = DateFormatter()
+    formatter.locale = .current
+    formatter.timeZone = TimeZone(identifier: iana) ?? .current
+    formatter.dateFormat = "EEE, MMM d"
+    return formatter.string(from: date)
   }
 }

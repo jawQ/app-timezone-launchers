@@ -60,6 +60,70 @@ func sameAppCanBeAssignedToMultipleTimezoneGroups() throws {
 }
 
 @Test
+func removeEntryDropsOnlyThatTimezoneRecordAndPrunesUnusedApps() {
+  let app = ManagedApp(
+    displayName: "WeChat",
+    bundleIdentifier: "com.tencent.xinWeChat",
+    appPath: "/Applications/WeChat.app",
+    executablePath: "/Applications/WeChat.app/Contents/MacOS/WeChat"
+  )
+  let shanghai = TimezoneGroup(name: "China Mainland", ianaTimezone: "Asia/Shanghai")
+  let singapore = TimezoneGroup(name: "Singapore", ianaTimezone: "Asia/Singapore")
+  var configuration = LauncherConfiguration(
+    groups: [shanghai, singapore],
+    apps: [app],
+    entries: []
+  )
+  configuration.add(appID: app.id, to: shanghai.id)
+  configuration.add(appID: app.id, to: singapore.id)
+
+  let shanghaiEntry = configuration.entries.first { $0.groupID == shanghai.id }!
+  configuration.removeEntry(id: shanghaiEntry.id)
+
+  #expect(configuration.entries.count == 1)
+  #expect(configuration.entries.first?.groupID == singapore.id)
+  #expect(configuration.apps.count == 1)
+
+  let singaporeEntry = configuration.entries.first!
+  configuration.removeEntry(id: singaporeEntry.id)
+
+  #expect(configuration.entries.isEmpty)
+  #expect(configuration.apps.isEmpty)
+}
+
+@Test
+func removeGroupDeletesTimezoneAndItsEntriesOnly() {
+  let wechat = ManagedApp(
+    displayName: "WeChat",
+    bundleIdentifier: "com.tencent.xinWeChat",
+    appPath: "/Applications/WeChat.app",
+    executablePath: "/Applications/WeChat.app/Contents/MacOS/WeChat"
+  )
+  let lark = ManagedApp(
+    displayName: "Lark",
+    bundleIdentifier: "com.bytedance.macos.feishu",
+    appPath: "/Applications/Lark.app",
+    executablePath: "/Applications/Lark.app/Contents/MacOS/Feishu"
+  )
+  let shanghai = TimezoneGroup(name: "China Mainland", ianaTimezone: "Asia/Shanghai")
+  let singapore = TimezoneGroup(name: "Singapore", ianaTimezone: "Asia/Singapore")
+  var configuration = LauncherConfiguration(
+    groups: [shanghai, singapore],
+    apps: [wechat, lark],
+    entries: []
+  )
+  configuration.add(appID: wechat.id, to: shanghai.id)
+  configuration.add(appID: lark.id, to: singapore.id)
+
+  configuration.removeGroup(id: shanghai.id)
+
+  #expect(configuration.groups.map(\.id) == [singapore.id])
+  #expect(configuration.entries.count == 1)
+  #expect(configuration.entries.first?.managedAppID == lark.id)
+  #expect(configuration.apps.map(\.id) == [lark.id])
+}
+
+@Test
 func redroppingMovedAppRefreshesItsStoredPath() {
   let group = TimezoneGroup(name: "Singapore", ianaTimezone: "Asia/Singapore")
   let original = ManagedApp(

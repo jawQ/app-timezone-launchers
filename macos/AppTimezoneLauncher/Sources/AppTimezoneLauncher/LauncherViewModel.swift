@@ -110,13 +110,21 @@ final class LauncherViewModel: ObservableObject {
   }
 
   func remove(entry: LauncherEntry) {
-    configuration.entries.removeAll { $0.id == entry.id }
+    configuration.removeEntry(id: entry.id)
+    save()
+  }
+
+  func removeTimezoneGroup(_ group: TimezoneGroup) {
+    let wasSelected = selectedGroupID == group.id
+    configuration.removeGroup(id: group.id)
+    if wasSelected {
+      selectedGroupID = sortedGroups.first?.id
+    }
     save()
   }
 
   func removeAppEverywhere(_ app: ManagedApp) {
-    configuration.entries.removeAll { $0.managedAppID == app.id }
-    configuration.apps.removeAll { $0.id == app.id }
+    configuration.removeAppEverywhere(id: app.id)
     save()
   }
 

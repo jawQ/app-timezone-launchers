@@ -38,6 +38,22 @@ open "/Applications/ZoneLaunch.app"
 `/Applications/ZoneLaunch.app` is a build artifact, not the Git workspace. Make changes in
 this repository, rebuild, then replace the installed app when needed.
 
+### After every change: rebuild and reinstall
+
+Whenever agent or developer work changes the macOS app (Swift sources, resources,
+`Package.swift`, or build/install scripts), **always finish by rebuilding and reinstalling**
+so `/Applications/ZoneLaunch.app` matches the workspace:
+
+```bash
+cd macos/AppTimezoneLauncher
+swift test
+./scripts/build-app.sh
+./scripts/install-app.sh
+```
+
+Do this at the end of each completed change set, not only before commits. Skip only when the
+change is docs-only or otherwise cannot affect the installed app.
+
 ## Coding style and naming
 
 Use Swift 6 and macOS 14 APIs. Follow `swift-format`; existing Swift code uses two-space
