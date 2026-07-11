@@ -14,6 +14,13 @@ logic in `Sources/AppTimezoneLauncherCore/`; SwiftUI views and view models belon
 source files and generated resources live in `Resources/`. Do not edit `.build/` or `build/`;
 both are ignored generated directories.
 
+## App identity
+
+The public, stable macOS bundle identifier is `io.github.jawq.zonelaunch`, derived from this
+repository's canonical GitHub location. It must remain unchanged across releases: do not use a
+personal or local-development identifier. Any intentional identity migration must include a
+LaunchServices deregistration path and regression coverage for a single installed app entry.
+
 ## Build, test, and development commands
 
 Use `./install.sh --feishu --wechat` from the repository root to install shell launchers. In
@@ -23,7 +30,8 @@ Use `./install.sh --feishu --wechat` from the repository root to install shell l
 swift test
 xcrun swift-format lint --recursive Sources Tests Package.swift
 ./scripts/build-app.sh
-open "build/ZoneLaunch.app"
+./scripts/install-app.sh
+open "/Applications/ZoneLaunch.app"
 ```
 
 `build-app.sh` creates a distributable, ad-hoc-signed `.app`. The installed copy at

@@ -9,10 +9,12 @@
 ```bash
 cd macos/AppTimezoneLauncher
 ./scripts/build-app.sh
-open "build/ZoneLaunch.app"
+./scripts/install-app.sh
+open "/Applications/ZoneLaunch.app"
 ```
 
 构建产物使用 ad-hoc 签名，不需要付费 Apple Developer 账号。
+Bundle ID 固定为公开的 `io.github.jawq.zonelaunch`。
 
 ## 使用
 
@@ -33,5 +35,7 @@ open "build/ZoneLaunch.app"
 ```bash
 swift test
 ./scripts/build-app.sh
-codesign --verify --deep --strict "build/ZoneLaunch.app"
+./scripts/test-build-app.sh
+./scripts/test-install-app.sh
+codesign --verify --deep --strict ".build/app/ZoneLaunch.app"
 ```

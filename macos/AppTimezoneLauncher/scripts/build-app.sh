@@ -4,8 +4,10 @@ set -euo pipefail
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 APP_NAME="ZoneLaunch"
 BINARY_NAME="AppTimezoneLauncher"
-BUILD_ROOT="$PROJECT_DIR/build"
+BUNDLE_ID="io.github.jawq.zonelaunch"
+BUILD_ROOT="$PROJECT_DIR/.build/app"
 APP_BUNDLE="$BUILD_ROOT/$APP_NAME.app"
+LEGACY_APP_BUNDLE="$PROJECT_DIR/build/$APP_NAME.app"
 CONTENTS_DIR="$APP_BUNDLE/Contents"
 MACOS_DIR="$CONTENTS_DIR/MacOS"
 RESOURCES_DIR="$CONTENTS_DIR/Resources"
@@ -13,13 +15,13 @@ RESOURCES_DIR="$CONTENTS_DIR/Resources"
 cd "$PROJECT_DIR"
 swift build -c release
 
-rm -rf "$APP_BUNDLE"
+rm -rf "$LEGACY_APP_BUNDLE" "$APP_BUNDLE"
 mkdir -p "$MACOS_DIR" "$RESOURCES_DIR"
 
 cp "$PROJECT_DIR/.build/release/$BINARY_NAME" "$MACOS_DIR/$BINARY_NAME"
 cp "$PROJECT_DIR/Resources/AppIcon.icns" "$RESOURCES_DIR/AppIcon.icns"
 
-cat > "$CONTENTS_DIR/Info.plist" <<'PLIST'
+cat > "$CONTENTS_DIR/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
@@ -29,7 +31,7 @@ cat > "$CONTENTS_DIR/Info.plist" <<'PLIST'
   <key>CFBundleExecutable</key>
   <string>AppTimezoneLauncher</string>
   <key>CFBundleIdentifier</key>
-  <string>app.zonelaunch.launcher</string>
+  <string>$BUNDLE_ID</string>
   <key>CFBundleInfoDictionaryVersion</key>
   <string>6.0</string>
   <key>CFBundleIconFile</key>

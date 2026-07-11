@@ -12,6 +12,12 @@
 `Sources/AppTimezoneLauncher/`。测试位于 `Tests/AppTimezoneLauncherTests/`，图标源文件
 和生成资源位于 `Resources/`。不要编辑 `.build/` 或 `build/`，两者均为已忽略的生成目录。
 
+## 应用身份
+
+公开且稳定的 macOS Bundle ID 为 `io.github.jawq.zonelaunch`，它由本仓库的 GitHub 地址派生。
+所有发布版本必须保持该 ID 不变，不得使用个人或本地开发 ID。若确需迁移身份，必须同时提供
+LaunchServices 注销路径，并用回归测试保证系统只保留一个已安装应用入口。
+
 ## 构建、测试与开发命令
 
 在仓库根目录使用 `./install.sh --feishu --wechat` 安装 shell 命令。在
@@ -21,7 +27,8 @@
 swift test
 xcrun swift-format lint --recursive Sources Tests Package.swift
 ./scripts/build-app.sh
-open "build/ZoneLaunch.app"
+./scripts/install-app.sh
+open "/Applications/ZoneLaunch.app"
 ```
 
 `build-app.sh` 会创建并以 ad-hoc 方式签名可分发 `.app`。`/Applications/ZoneLaunch.app`
