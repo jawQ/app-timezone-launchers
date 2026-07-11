@@ -92,6 +92,60 @@ func removeEntryDropsOnlyThatTimezoneRecordAndPrunesUnusedApps() {
 }
 
 @Test
+func updateGroupChangesNameAndIANAWhilePreservingIdentityAndEntries() {
+  let app = ManagedApp(
+    displayName: "WeChat",
+    bundleIdentifier: "com.tencent.xinWeChat",
+    appPath: "/Applications/WeChat.app",
+    executablePath: "/Applications/WeChat.app/Contents/MacOS/WeChat"
+  )
+  let sanFrancisco = TimezoneGroup(
+    name: "San Francisco",
+    ianaTimezone: "America/Los_Angeles",
+    sortOrder: 3
+  )
+  var configuration = LauncherConfiguration(
+    groups: [sanFrancisco],
+    apps: [app],
+    entries: []
+  )
+  configuration.add(appID: app.id, to: sanFrancisco.id)
+  let entryID = configuration.entries.first!.id
+
+  let updated = configuration.updateGroup(
+    id: sanFrancisco.id,
+    name: "Singapore",
+    ianaTimezone: "Asia/Singapore"
+  )
+
+  #expect(updated)
+  #expect(configuration.groups.count == 1)
+  let group = configuration.groups[0]
+  #expect(group.id == sanFrancisco.id)
+  #expect(group.name == "Singapore")
+  #expect(group.ianaTimezone == "Asia/Singapore")
+  #expect(group.sortOrder == 3)
+  #expect(configuration.entries.map(\.id) == [entryID])
+  #expect(configuration.entries.first?.groupID == sanFrancisco.id)
+  #expect(configuration.apps.map(\.id) == [app.id])
+}
+
+@Test
+func updateGroupReturnsFalseForUnknownGroupID() {
+  let group = TimezoneGroup(name: "Tokyo", ianaTimezone: "Asia/Tokyo")
+  var configuration = LauncherConfiguration(groups: [group])
+
+  let updated = configuration.updateGroup(
+    id: UUID(),
+    name: "Singapore",
+    ianaTimezone: "Asia/Singapore"
+  )
+
+  #expect(!updated)
+  #expect(configuration.groups == [group])
+}
+
+@Test
 func removeGroupDeletesTimezoneAndItsEntriesOnly() {
   let wechat = ManagedApp(
     displayName: "WeChat",

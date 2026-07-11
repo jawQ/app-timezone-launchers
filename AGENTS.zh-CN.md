@@ -5,18 +5,40 @@
 ## 项目结构与模块组织
 
 根目录的 `bin/` 包含 `feishu-tz`、`wechat-tz` 等 shell 启动命令；`install.sh`
-会将它们安装到用户指定的前缀目录。面向用户的文档位于 `README.md` 和 `docs/`。
+会将它们安装到用户指定的前缀目录。面向用户的文档位于 `README.md` / `README.zh-CN.md`
+与分模块的 `docs/`：
+
+- `docs/scripts/` — shell 启动命令（主路径、最轻量）
+- `docs/app/` — ZoneLaunch 图形界面（可选、体验更好）
+- `docs/superpowers/` 与 `.superpowers/` — 仅内部 agent/设计笔记（已 gitignore）
 
 原生 App 是位于 `macos/AppTimezoneLauncher/` 的 Swift Package。将可复用的非 UI
 逻辑放在 `Sources/AppTimezoneLauncherCore/`；SwiftUI 页面和 ViewModel 放在
 `Sources/AppTimezoneLauncher/`。测试位于 `Tests/AppTimezoneLauncherTests/`，图标源文件
 和生成资源位于 `Resources/`。不要编辑 `.build/` 或 `build/`，两者均为已忽略的生成目录。
+Release zip 输出到 `dist/`（同样已忽略）。
+
+### GitHub Releases（App zip，无需付费苹果账号）
+
+推送匹配 `v*` 的 tag 会在 `macos-latest` 上运行 `.github/workflows/release-macos-app.yml`：
+测试、`package-release.sh`，并上传 `ZoneLaunch-<version>-macos.zip` 与 `SHA256SUMS`。
+构建仅为 **ad-hoc 签名**（无 Developer ID / 公证）。本地打包：
+
+```bash
+./macos/AppTimezoneLauncher/scripts/package-release.sh 0.1.0
+```
 
 ## 应用身份
 
-公开且稳定的 macOS Bundle ID 为 `io.github.jawq.zonelaunch`，它由本仓库的 GitHub 地址派生。
-所有发布版本必须保持该 ID 不变，不得使用个人或本地开发 ID。若确需迁移身份，必须同时提供
-LaunchServices 注销路径，并用回归测试保证系统只保留一个已安装应用入口。
+公开且稳定的 macOS Bundle ID 为 **`app.zonelaunch.launcher`**，对所有构建与安装强绑定：凡从本仓库
+构建/分发的 ZoneLaunch，在任何机器、fork、发布版本中都必须使用同一 ID。唯一真相源是
+`macos/AppTimezoneLauncher/scripts/app-identity.sh`（由 `build-app.sh` 与 `install-app.sh` 引用）。
+不得替换为个人、GitHub 用户或本地开发用 ID。
+
+`install-app.sh` 必须保证 Dock / LaunchServices 只有一个应用入口：拒绝非规范 Bundle ID 的构建产物，
+清理安装目录下的历史 Bundle ID（当前含 `io.github.jawq.zonelaunch`）与历史应用名，注销已知会
+产生双图标的路径，仅强制注册 `ZoneLaunch.app`，并执行 LaunchServices 垃圾回收。若确需再次迁移
+身份，必须扩展 `LEGACY_BUNDLE_IDS` / 清理逻辑，并保持安装回归测试通过。
 
 ## 构建、测试与开发命令
 

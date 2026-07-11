@@ -2,7 +2,9 @@
 set -euo pipefail
 
 PROJECT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-APP_NAME="ZoneLaunch"
+# shellcheck source=app-identity.sh
+source "$PROJECT_DIR/scripts/app-identity.sh"
+
 SOURCE_APP="$PROJECT_DIR/.build/app/$APP_NAME.app"
 LEGACY_BUILD_APP="$PROJECT_DIR/build/$APP_NAME.app"
 INSTALL_DIR="${INSTALL_DIR:-/Applications}"
@@ -16,26 +18,142 @@ if [[ -z "${REFRESH_LAUNCH_SERVICES+x}" ]]; then
 fi
 
 test -d "$SOURCE_APP"
+
+built_bundle_id="$(plutil -extract CFBundleIdentifier raw "$SOURCE_APP/Contents/Info.plist")"
+if [[ "$built_bundle_id" != "$CANONICAL_BUNDLE_ID" ]]; then
+  echo "Refusing to install: built Bundle ID is '$built_bundle_id', expected '$CANONICAL_BUNDLE_ID'." >&2
+  echo "Rebuild with scripts/build-app.sh so identity stays strongly bound." >&2
+  exit 1
+fi
+
 mkdir -p "$INSTALL_DIR"
 
 if [[ "$REFRESH_LAUNCH_SERVICES" == "1" ]]; then
   LSREGISTER="${LSREGISTER:-$(find /System/Library/Frameworks/CoreServices.framework -path '*lsregister' -type f -print -quit)}"
-  "$LSREGISTER" -u "$LEGACY_BUILD_APP" || true
-  "$LSREGISTER" -u "$SOURCE_APP" || true
-  "$LSREGISTER" -u "$TARGET_APP"
 fi
 
+unregister_path() {
+  local path="$1"
+  if [[ "$REFRESH_LAUNCH_SERVICES" == "1" ]]; then
+    # Missing paths are expected during cleanup; keep stderr quiet.
+    "$LSREGISTER" -u "$path" >/dev/null 2>&1 || true
+  fi
+}
+
+remove_app_bundle() {
+  local path="$1"
+  unregister_path "$path"
+  if [[ -e "$path" ]]; then
+    rm -rf "$path"
+  fi
+}
+
+bundle_id_of() {
+  local app="$1"
+  plutil -extract CFBundleIdentifier raw "$app/Contents/Info.plist" 2>/dev/null || true
+}
+
+is_legacy_bundle_id() {
+  local bid="$1"
+  local legacy
+  for legacy in "${LEGACY_BUNDLE_IDS[@]}"; do
+    if [[ "$bid" == "$legacy" ]]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+# Unregister known paths that historically produced a second Dock icon.
+known_paths=(
+  "$LEGACY_BUILD_APP"
+  "$PROJECT_DIR/build/App Timezone Launcher.app"
+  "$SOURCE_APP"
+  "$TARGET_APP"
+  "$INSTALL_DIR/App Timezone Launcher.app"
+)
+for path in "${known_paths[@]}"; do
+  unregister_path "$path"
+done
+
+# Drop prior product names under the install prefix (and local build tree).
+for legacy_name in "${LEGACY_APP_BUNDLE_NAMES[@]}"; do
+  if [[ -d "$INSTALL_DIR/$legacy_name" && "$INSTALL_DIR/$legacy_name" != "$TARGET_APP" ]]; then
+    remove_app_bundle "$INSTALL_DIR/$legacy_name"
+  fi
+  if [[ -d "$PROJECT_DIR/build/$legacy_name" ]]; then
+    remove_app_bundle "$PROJECT_DIR/build/$legacy_name"
+  fi
+done
+
+# Purge install-prefix apps that still carry a legacy Bundle ID, or a second
+# copy of the canonical ZoneLaunch identity at a non-target path.
+shopt -s nullglob
+for app in "$INSTALL_DIR"/*.app; do
+  [[ -d "$app" ]] || continue
+  bid="$(bundle_id_of "$app")"
+  if is_legacy_bundle_id "$bid"; then
+    remove_app_bundle "$app"
+    continue
+  fi
+  if [[ "$bid" == "$CANONICAL_BUNDLE_ID" && "$app" != "$TARGET_APP" ]]; then
+    remove_app_bundle "$app"
+  fi
+done
+shopt -u nullglob
+
+# Replace the canonical install path atomically from LaunchServices' perspective.
+unregister_path "$TARGET_APP"
 rm -rf "$TARGET_APP"
 ditto "$SOURCE_APP" "$TARGET_APP"
 codesign --verify --deep --strict "$TARGET_APP"
 
+installed_bundle_id="$(plutil -extract CFBundleIdentifier raw "$TARGET_APP/Contents/Info.plist")"
+if [[ "$installed_bundle_id" != "$CANONICAL_BUNDLE_ID" ]]; then
+  echo "Installed Bundle ID mismatch: '$installed_bundle_id' (expected '$CANONICAL_BUNDLE_ID')." >&2
+  exit 1
+fi
+
+# Drop every LaunchServices record for this product except the install target.
+# Covers: identity migration, old product names, build-tree copies, and tmp ghosts
+# that previously produced a second Dock / Launchpad icon.
+unregister_stale_product_paths() {
+  [[ "$REFRESH_LAUNCH_SERVICES" == "1" ]] || return 0
+
+  local path
+  while IFS= read -r path; do
+    [[ -z "$path" ]] && continue
+    if [[ "$path" == "$TARGET_APP" ]]; then
+      continue
+    fi
+    case "$path" in
+      */ZoneLaunch.app | */"App Timezone Launcher.app")
+        unregister_path "$path"
+        ;;
+    esac
+  done < <(
+    "$LSREGISTER" -dump 2>/dev/null \
+      | sed -n 's/^path:[[:space:]]*//p' \
+      | sed 's/[[:space:]]*(0x[0-9a-fA-F]*)[[:space:]]*$//'
+  )
+}
+
 if [[ "$REFRESH_LAUNCH_SERVICES" == "1" ]]; then
-  "$LSREGISTER" -f "$TARGET_APP"
-  "$LSREGISTER" -gc
+  # Build product stays on disk for development; it must not stay registered.
+  unregister_path "$SOURCE_APP"
+  unregister_path "$LEGACY_BUILD_APP"
+  unregister_stale_product_paths
+  "$LSREGISTER" -f "$TARGET_APP" >/dev/null 2>&1
+  "$LSREGISTER" -gc >/dev/null 2>&1
+  # Second pass: GC can revive discovery of nearby copies; pin target only.
+  unregister_stale_product_paths
+  unregister_path "$SOURCE_APP"
+  "$LSREGISTER" -f "$TARGET_APP" >/dev/null 2>&1
+  "$LSREGISTER" -gc >/dev/null 2>&1
 fi
 
 if [[ "$INSTALL_DIR" == "/Applications" ]]; then
-  killall Dock
+  killall Dock 2>/dev/null || true
 fi
 
-echo "Installed: $TARGET_APP"
+echo "Installed: $TARGET_APP ($CANONICAL_BUNDLE_ID)"

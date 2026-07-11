@@ -1,14 +1,30 @@
+import AppTimezoneLauncherCore
 import SwiftUI
+
+enum TimezoneGroupSheetMode: Identifiable, Equatable {
+  case add
+  case edit(TimezoneGroup)
+
+  var id: String {
+    switch self {
+    case .add:
+      return "add"
+    case .edit(let group):
+      return group.id.uuidString
+    }
+  }
+}
 
 struct AddTimezoneSheet: View {
   @ObservedObject var model: LauncherViewModel
+  let mode: TimezoneGroupSheetMode
   @Environment(\.dismiss) private var dismiss
 
-  @State private var name = ""
-  @State private var timezone = "Asia/Shanghai"
-  @State private var selectedPresetID: String? = "Asia/Shanghai"
+  @State private var name: String
+  @State private var timezone: String
+  @State private var selectedPresetID: String?
 
-  private let presets: [(String, String)] = [
+  private static let presets: [(String, String)] = [
     ("China Mainland", "Asia/Shanghai"),
     ("San Francisco", "America/Los_Angeles"),
     ("Singapore", "Asia/Singapore"),
@@ -17,18 +33,53 @@ struct AddTimezoneSheet: View {
     ("Berlin", "Europe/Berlin"),
   ]
 
+  private var isEditing: Bool {
+    if case .edit = mode { return true }
+    return false
+  }
+
+  private var titleText: String {
+    isEditing ? "Edit Time Zone" : "Add Time Zone"
+  }
+
+  private var subtitleText: String {
+    isEditing
+      ? "Change the name or IANA clock used by this group."
+      : "Group apps that should share one clock."
+  }
+
+  private var primaryButtonTitle: String {
+    isEditing ? "Save" : "Add"
+  }
+
+  init(model: LauncherViewModel, mode: TimezoneGroupSheetMode = .add) {
+    self.model = model
+    self.mode = mode
+    switch mode {
+    case .add:
+      _name = State(initialValue: "")
+      _timezone = State(initialValue: "Asia/Shanghai")
+      _selectedPresetID = State(initialValue: "Asia/Shanghai")
+    case .edit(let group):
+      _name = State(initialValue: group.name)
+      _timezone = State(initialValue: group.ianaTimezone)
+      let matchingPreset = Self.presets.first { $0.1 == group.ianaTimezone }
+      _selectedPresetID = State(initialValue: matchingPreset?.1)
+    }
+  }
+
   var body: some View {
     VStack(alignment: .leading, spacing: 20) {
       HStack(spacing: 10) {
-        Image(systemName: "globe.badge.clock")
+        Image(systemName: isEditing ? "pencil.circle.fill" : "globe.badge.clock")
           .font(.system(size: 22, weight: .semibold))
           .foregroundStyle(ZoneTheme.accent)
           .symbolRenderingMode(.hierarchical)
 
         VStack(alignment: .leading, spacing: 2) {
-          Text("Add Time Zone")
+          Text(titleText)
             .font(.title2.weight(.semibold))
-          Text("Group apps that should share one clock.")
+          Text(subtitleText)
             .font(.callout)
             .foregroundStyle(.secondary)
         }
@@ -41,7 +92,7 @@ struct AddTimezoneSheet: View {
             .onChange(of: name) { _, _ in
               // Custom name clears preset highlight only when no longer matching.
               if let selected = selectedPresetID,
-                !presets.contains(where: { $0.1 == selected && $0.0 == name })
+                !Self.presets.contains(where: { $0.1 == selected && $0.0 == name })
               {
                 selectedPresetID = nil
               }
@@ -52,7 +103,7 @@ struct AddTimezoneSheet: View {
           TextField("e.g. Asia/Shanghai", text: $timezone)
             .textFieldStyle(.roundedBorder)
             .onChange(of: timezone) { _, newValue in
-              if presets.contains(where: { $0.1 == newValue }) {
+              if Self.presets.contains(where: { $0.1 == newValue }) {
                 selectedPresetID = newValue
               } else {
                 selectedPresetID = nil
@@ -69,7 +120,7 @@ struct AddTimezoneSheet: View {
           .tracking(0.3)
 
         LazyVGrid(columns: [GridItem(.adaptive(minimum: 140), spacing: 8)], spacing: 8) {
-          ForEach(presets, id: \.1) { preset in
+          ForEach(Self.presets, id: \.1) { preset in
             let isSelected = selectedPresetID == preset.1
             Button {
               name = preset.0
@@ -113,9 +164,8 @@ struct AddTimezoneSheet: View {
         }
         .keyboardShortcut(.cancelAction)
 
-        Button("Add") {
-          model.addTimezoneGroup(name: name, ianaTimezone: timezone)
-          dismiss()
+        Button(primaryButtonTitle) {
+          save()
         }
         .keyboardShortcut(.defaultAction)
         .buttonStyle(.borderedProminent)
@@ -124,6 +174,16 @@ struct AddTimezoneSheet: View {
     }
     .padding(24)
     .frame(width: 480)
+  }
+
+  private func save() {
+    switch mode {
+    case .add:
+      model.addTimezoneGroup(name: name, ianaTimezone: timezone)
+    case .edit(let group):
+      model.updateTimezoneGroup(group, name: name, ianaTimezone: timezone)
+    }
+    dismiss()
   }
 
   @ViewBuilder

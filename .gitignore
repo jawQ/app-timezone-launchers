@@ -4,4 +4,7 @@ tmp/
 dist/
 macos/AppTimezoneLauncher/.build/
 macos/AppTimezoneLauncher/build/
-docs/
+
+# Internal agent / design process docs only — user docs under docs/ are tracked.
+docs/superpowers/
+.superpowers/

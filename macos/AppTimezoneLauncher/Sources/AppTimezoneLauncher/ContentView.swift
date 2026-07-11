@@ -4,7 +4,7 @@ import SwiftUI
 
 struct ContentView: View {
   @StateObject private var model = LauncherViewModel()
-  @State private var showingAddTimezone = false
+  @State private var timezoneSheet: TimezoneGroupSheetMode?
   @State private var groupPendingDeletion: TimezoneGroup?
 
   var body: some View {
@@ -12,7 +12,12 @@ struct ContentView: View {
       SidebarView(
         groups: model.sortedGroups,
         selectedGroupID: $model.selectedGroupID,
-        showingAddTimezone: $showingAddTimezone,
+        onAddGroup: {
+          timezoneSheet = .add
+        },
+        onEditGroup: { group in
+          timezoneSheet = .edit(group)
+        },
         onDeleteGroup: { group in
           groupPendingDeletion = group
         }
@@ -24,6 +29,9 @@ struct ContentView: View {
 
       MainPanelView(
         model: model,
+        onEditGroup: { group in
+          timezoneSheet = .edit(group)
+        },
         onDeleteGroup: { group in
           groupPendingDeletion = group
         }
@@ -33,15 +41,15 @@ struct ContentView: View {
     .toolbar {
       ToolbarItem {
         Button {
-          showingAddTimezone = true
+          timezoneSheet = .add
         } label: {
           Label("Add Time Zone", systemImage: "plus")
         }
         .help("Add a time zone group")
       }
     }
-    .sheet(isPresented: $showingAddTimezone) {
-      AddTimezoneSheet(model: model)
+    .sheet(item: $timezoneSheet) { mode in
+      AddTimezoneSheet(model: model, mode: mode)
     }
     .alert(
       "ZoneLaunch",
@@ -89,7 +97,8 @@ struct ContentView: View {
 private struct SidebarView: View {
   let groups: [TimezoneGroup]
   @Binding var selectedGroupID: UUID?
-  @Binding var showingAddTimezone: Bool
+  let onAddGroup: () -> Void
+  let onEditGroup: (TimezoneGroup) -> Void
   let onDeleteGroup: (TimezoneGroup) -> Void
 
   var body: some View {
@@ -114,6 +123,9 @@ private struct SidebarView: View {
             .tag(group.id as UUID?)
             .listRowInsets(EdgeInsets(top: 3, leading: 8, bottom: 3, trailing: 8))
             .contextMenu {
+              Button("Edit Time Zone") {
+                onEditGroup(group)
+              }
               Button("Delete Time Zone", role: .destructive) {
                 onDeleteGroup(group)
               }
@@ -133,7 +145,7 @@ private struct SidebarView: View {
         .opacity(0.5)
 
       Button {
-        showingAddTimezone = true
+        onAddGroup()
       } label: {
         Label("Add Time Zone", systemImage: "plus.circle.fill")
           .font(.system(size: 13, weight: .medium))
@@ -199,6 +211,7 @@ private struct SidebarRow: View {
 
 private struct MainPanelView: View {
   @ObservedObject var model: LauncherViewModel
+  var onEditGroup: (TimezoneGroup) -> Void
   var onDeleteGroup: (TimezoneGroup) -> Void
 
   var body: some View {
@@ -206,6 +219,7 @@ private struct MainPanelView: View {
       if let group = model.selectedGroup {
         HeaderView(
           group: group,
+          onEditGroup: { onEditGroup(group) },
           onDeleteGroup: { onDeleteGroup(group) }
         )
 
@@ -236,6 +250,7 @@ private struct MainPanelView: View {
 
 private struct HeaderView: View {
   let group: TimezoneGroup
+  let onEditGroup: () -> Void
   let onDeleteGroup: () -> Void
   @State private var now = Date()
 
@@ -275,6 +290,9 @@ private struct HeaderView: View {
       }
 
       Menu {
+        Button("Edit Time Zone") {
+          onEditGroup()
+        }
         Button("Delete Time Zone", role: .destructive) {
           onDeleteGroup()
         }

@@ -54,26 +54,55 @@ final class LauncherViewModel: ObservableObject {
   }
 
   func addTimezoneGroup(name: String, ianaTimezone: String) {
-    let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
-    let trimmedTimezone = ianaTimezone.trimmingCharacters(in: .whitespacesAndNewlines)
-    guard !trimmedName.isEmpty, !trimmedTimezone.isEmpty else {
-      alertMessage = "Enter a group name and IANA time zone."
-      return
-    }
-    guard TimezoneIdentifierValidator.isValid(trimmedTimezone) else {
-      alertMessage = "Enter a valid IANA time zone, such as Asia/Shanghai."
+    guard let trimmed = validatedGroupFields(name: name, ianaTimezone: ianaTimezone) else {
       return
     }
 
     let nextSortOrder = (configuration.groups.map(\.sortOrder).max() ?? -1) + 1
     let group = TimezoneGroup(
-      name: trimmedName,
-      ianaTimezone: trimmedTimezone,
+      name: trimmed.name,
+      ianaTimezone: trimmed.ianaTimezone,
       sortOrder: nextSortOrder
     )
     configuration.groups.append(group)
     selectedGroupID = group.id
     save()
+  }
+
+  /// Renames a group and/or changes its IANA time zone.
+  /// Existing apps in the group stay assigned; future launches use the new TZ.
+  func updateTimezoneGroup(_ group: TimezoneGroup, name: String, ianaTimezone: String) {
+    guard let trimmed = validatedGroupFields(name: name, ianaTimezone: ianaTimezone) else {
+      return
+    }
+    let didUpdate = configuration.updateGroup(
+      id: group.id,
+      name: trimmed.name,
+      ianaTimezone: trimmed.ianaTimezone
+    )
+    guard didUpdate else {
+      alertMessage = "That time zone group no longer exists."
+      return
+    }
+    selectedGroupID = group.id
+    save()
+  }
+
+  private func validatedGroupFields(
+    name: String,
+    ianaTimezone: String
+  ) -> (name: String, ianaTimezone: String)? {
+    let trimmedName = name.trimmingCharacters(in: .whitespacesAndNewlines)
+    let trimmedTimezone = ianaTimezone.trimmingCharacters(in: .whitespacesAndNewlines)
+    guard !trimmedName.isEmpty, !trimmedTimezone.isEmpty else {
+      alertMessage = "Enter a group name and IANA time zone."
+      return nil
+    }
+    guard TimezoneIdentifierValidator.isValid(trimmedTimezone) else {
+      alertMessage = "Enter a valid IANA time zone, such as Asia/Shanghai."
+      return nil
+    }
+    return (trimmedName, trimmedTimezone)
   }
 
   func addApp(from url: URL) {

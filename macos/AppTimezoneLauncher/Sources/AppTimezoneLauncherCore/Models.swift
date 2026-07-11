@@ -147,6 +147,17 @@ public struct LauncherConfiguration: Codable, Equatable, Sendable {
     pruneOrphanedApps()
   }
 
+  /// Updates a time zone group's display name and IANA identifier.
+  /// Keeps the group id, sort order, and all app entries under that group.
+  /// Returns false when the group is missing.
+  @discardableResult
+  public mutating func updateGroup(id: UUID, name: String, ianaTimezone: String) -> Bool {
+    guard let index = groups.firstIndex(where: { $0.id == id }) else { return false }
+    groups[index].name = name
+    groups[index].ianaTimezone = ianaTimezone
+    return true
+  }
+
   /// Removes a time zone group and every entry assigned to it.
   /// Managed apps that become unreferenced are pruned from configuration.
   public mutating func removeGroup(id: UUID) {

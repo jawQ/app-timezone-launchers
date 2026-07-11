@@ -6,20 +6,42 @@
 
 The root `bin/` directory contains shell launchers such as `feishu-tz` and `wechat-tz`.
 `install.sh` installs them to a user-specified prefix. User-facing documentation lives in
-`README.md` and `docs/`.
+`README.md` / `README.zh-CN.md` and modular `docs/`:
+
+- `docs/scripts/` — shell launchers (primary, lightest path)
+- `docs/app/` — ZoneLaunch GUI (optional, better UX)
+- `docs/superpowers/` and `.superpowers/` — internal agent/design notes only (gitignored)
 
 The native app is a Swift Package at `macos/AppTimezoneLauncher/`. Put reusable non-UI
 logic in `Sources/AppTimezoneLauncherCore/`; SwiftUI views and view models belong in
 `Sources/AppTimezoneLauncher/`. Tests live in `Tests/AppTimezoneLauncherTests/`, and icon
 source files and generated resources live in `Resources/`. Do not edit `.build/` or `build/`;
-both are ignored generated directories.
+both are ignored generated directories. Release zips land in `dist/` (also gitignored).
+
+### GitHub Releases (app zip, no paid Apple account)
+
+Pushing a tag matching `v*` runs `.github/workflows/release-macos-app.yml` on `macos-latest`:
+tests, `package-release.sh`, upload of `ZoneLaunch-<version>-macos.zip` + `SHA256SUMS`.
+Builds are **ad-hoc signed** only (no Developer ID / notarization). Local package:
+
+```bash
+./macos/AppTimezoneLauncher/scripts/package-release.sh 0.1.0
+```
 
 ## App identity
 
-The public, stable macOS bundle identifier is `io.github.jawq.zonelaunch`, derived from this
-repository's canonical GitHub location. It must remain unchanged across releases: do not use a
-personal or local-development identifier. Any intentional identity migration must include a
-LaunchServices deregistration path and regression coverage for a single installed app entry.
+The public, stable macOS bundle identifier is **`app.zonelaunch.launcher`**. It is strongly bound
+for every build and install: all machines, forks, and releases that ship ZoneLaunch from this
+repository must use this same ID. The single source of truth is
+`macos/AppTimezoneLauncher/scripts/app-identity.sh` (sourced by `build-app.sh` and
+`install-app.sh`). Do not substitute personal, GitHub-user, or local-development identifiers.
+
+`install-app.sh` must keep a single Dock / LaunchServices entry: it refuses non-canonical built
+IDs, purges legacy bundle IDs (currently `io.github.jawq.zonelaunch`) and legacy app names under
+the install prefix, unregisters known dual-icon paths, force-registers only
+`/Applications/ZoneLaunch.app` (or `$INSTALL_DIR/ZoneLaunch.app`), and runs LaunchServices GC.
+Any intentional identity migration must extend `LEGACY_BUNDLE_IDS` / purge logic and keep the
+install regression tests green.
 
 ## Build, test, and development commands
 
