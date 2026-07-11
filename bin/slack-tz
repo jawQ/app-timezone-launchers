@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Usage:
+#   slack-tz
+#   SLACK_TZ=UTC slack-tz
+#
+# Regional examples:
+#   United States, San Francisco
+#     Work context: Microsoft Teams, Slack, Zoom
+#     Chat context: Messenger, iMessage, WhatsApp
+#     SLACK_TZ=America/Los_Angeles slack-tz
+#
+#   Europe, Germany
+#     Work context: Microsoft Teams, Slack, Zoom
+#     Chat context: WhatsApp, Telegram, Signal
+#     SLACK_TZ=Europe/Berlin slack-tz
+#
+#   Japan
+#     Work context: Microsoft Teams, LINE WORKS, Chatwork
+#     Chat context: LINE, WhatsApp, Messenger
+#     SLACK_TZ=Asia/Tokyo slack-tz
+#
+#   South Korea
+#     Work context: Microsoft Teams, Slack, KakaoWork
+#     Chat context: KakaoTalk, Telegram, WhatsApp
+#     SLACK_TZ=Asia/Seoul slack-tz
+#
+#   Singapore
+#     Work context: Microsoft Teams, Slack, Zoom
+#     Chat context: WhatsApp, Telegram, Messenger
+#     SLACK_TZ=Asia/Singapore slack-tz
+#
+# Short examples:
+#   SLACK_TZ=America/Los_Angeles slack-tz  # San Francisco, United States
+#   SLACK_TZ=Asia/Singapore slack-tz       # Singapore
+#   SLACK_TZ=Europe/Berlin slack-tz        # Germany
+
+SLACK_TZ="${SLACK_TZ:-Asia/Shanghai}"
+APP_PATH="${APP_PATH:-/Applications/Slack.app}"
+EXECUTABLE="$APP_PATH/Contents/MacOS/Slack"
+
+if [[ ! -x "$EXECUTABLE" ]]; then
+  echo "Executable not found: $EXECUTABLE" >&2
+  echo "Set APP_PATH=/path/to/Slack.app to use a custom app path." >&2
+  exit 1
+fi
+
+if pgrep -x "Slack" >/dev/null 2>&1; then
+  echo "Slack is already running."
+  echo "Quit Slack completely before running this command, otherwise the existing process will not pick up the new TZ value."
+  exit 2
+fi
+
+nohup env TZ="$SLACK_TZ" "$EXECUTABLE" >/dev/null 2>&1 &
+PID="$!"
+disown "$PID" 2>/dev/null || true
+
+sleep 1
+
+if ps -p "$PID" >/dev/null 2>&1; then
+  echo "Started Slack with TZ=$SLACK_TZ"
+else
+  echo "Slack did not stay running after launch." >&2
+  exit 3
+fi

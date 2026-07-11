@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Usage:
+#   feishu-tz
+#   LARK_TZ=UTC feishu-tz
+#
+# Regional examples:
+#   United States, San Francisco
+#     Work context: Microsoft Teams, Slack, Zoom
+#     Chat context: Messenger, iMessage, WhatsApp
+#     LARK_TZ=America/Los_Angeles feishu-tz
+#
+#   Europe, Germany
+#     Work context: Microsoft Teams, Slack, Zoom
+#     Chat context: WhatsApp, Telegram, Signal
+#     LARK_TZ=Europe/Berlin feishu-tz
+#
+#   Japan
+#     Work context: Microsoft Teams, LINE WORKS, Chatwork
+#     Chat context: LINE, WhatsApp, Messenger
+#     LARK_TZ=Asia/Tokyo feishu-tz
+#
+#   South Korea
+#     Work context: Microsoft Teams, Slack, KakaoWork
+#     Chat context: KakaoTalk, Telegram, WhatsApp
+#     LARK_TZ=Asia/Seoul feishu-tz
+#
+#   Singapore
+#     Work context: Microsoft Teams, Slack, Zoom
+#     Chat context: WhatsApp, Telegram, Messenger
+#     LARK_TZ=Asia/Singapore feishu-tz
+#
+# Short examples:
+#   LARK_TZ=America/Los_Angeles feishu-tz  # San Francisco, United States
+#   LARK_TZ=Asia/Singapore feishu-tz       # Singapore
+#   LARK_TZ=Europe/Berlin feishu-tz        # Germany
+
+LARK_TZ="${LARK_TZ:-Asia/Shanghai}"
+APP_PATH="${APP_PATH:-/Applications/Lark.app}"
+EXECUTABLE="$APP_PATH/Contents/MacOS/Feishu"
+
+if [[ ! -x "$EXECUTABLE" ]]; then
+  echo "Executable not found: $EXECUTABLE" >&2
+  echo "Set APP_PATH=/path/to/Lark.app to use a custom app path." >&2
+  exit 1
+fi
+
+if pgrep -x "Feishu" >/dev/null 2>&1; then
+  echo "Feishu/Lark is already running."
+  echo "Quit Feishu/Lark completely before running this command, otherwise the existing process will not pick up the new TZ value."
+  exit 2
+fi
+
+nohup env TZ="$LARK_TZ" "$EXECUTABLE" >/dev/null 2>&1 &
+PID="$!"
+disown "$PID" 2>/dev/null || true
+
+sleep 1
+
+if ps -p "$PID" >/dev/null 2>&1; then
+  echo "Started Feishu/Lark with TZ=$LARK_TZ"
+else
+  echo "Feishu/Lark did not stay running after launch." >&2
+  exit 3
+fi

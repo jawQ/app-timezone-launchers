@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Usage:
+#   line-tz
+#   LINE_TZ=UTC line-tz
+#
+# Regional examples:
+#   United States, San Francisco
+#     Work context: Microsoft Teams, Slack, Zoom
+#     Chat context: Messenger, iMessage, WhatsApp
+#     LINE_TZ=America/Los_Angeles line-tz
+#
+#   Europe, Germany
+#     Work context: Microsoft Teams, Slack, Zoom
+#     Chat context: WhatsApp, Telegram, Signal
+#     LINE_TZ=Europe/Berlin line-tz
+#
+#   Japan
+#     Work context: Microsoft Teams, LINE WORKS, Chatwork
+#     Chat context: LINE, WhatsApp, Messenger
+#     LINE_TZ=Asia/Tokyo line-tz
+#
+#   South Korea
+#     Work context: Microsoft Teams, Slack, KakaoWork
+#     Chat context: KakaoTalk, Telegram, WhatsApp
+#     LINE_TZ=Asia/Seoul line-tz
+#
+#   Singapore
+#     Work context: Microsoft Teams, Slack, Zoom
+#     Chat context: WhatsApp, Telegram, Messenger
+#     LINE_TZ=Asia/Singapore line-tz
+#
+# Short examples:
+#   LINE_TZ=America/Los_Angeles line-tz  # San Francisco, United States
+#   LINE_TZ=Asia/Singapore line-tz       # Singapore
+#   LINE_TZ=Europe/Berlin line-tz        # Germany
+
+LINE_TZ="${LINE_TZ:-Asia/Shanghai}"
+APP_PATH="${APP_PATH:-/Applications/LINE.app}"
+EXECUTABLE="$APP_PATH/Contents/MacOS/LINE"
+
+if [[ ! -x "$EXECUTABLE" ]]; then
+  echo "Executable not found: $EXECUTABLE" >&2
+  echo "Set APP_PATH=/path/to/LINE.app to use a custom app path." >&2
+  exit 1
+fi
+
+if pgrep -x "LINE" >/dev/null 2>&1; then
+  echo "LINE is already running."
+  echo "Quit LINE completely before running this command, otherwise the existing process will not pick up the new TZ value."
+  exit 2
+fi
+
+nohup env TZ="$LINE_TZ" "$EXECUTABLE" >/dev/null 2>&1 &
+PID="$!"
+disown "$PID" 2>/dev/null || true
+
+sleep 1
+
+if ps -p "$PID" >/dev/null 2>&1; then
+  echo "Started LINE with TZ=$LINE_TZ"
+else
+  echo "LINE did not stay running after launch." >&2
+  exit 3
+fi

@@ -1,0 +1,7 @@
+.DS_Store
+*.log
+tmp/
+dist/
+macos/AppTimezoneLauncher/.build/
+macos/AppTimezoneLauncher/build/
+docs/

@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+# Usage:
+#   wechat-tz
+#   WECHAT_TZ=UTC wechat-tz
+#
+# Regional examples:
+#   United States, San Francisco
+#     Work context: Microsoft Teams, Slack, Zoom
+#     Chat context: Messenger, iMessage, WhatsApp
+#     WECHAT_TZ=America/Los_Angeles wechat-tz
+#
+#   Europe, Germany
+#     Work context: Microsoft Teams, Slack, Zoom
+#     Chat context: WhatsApp, Telegram, Signal
+#     WECHAT_TZ=Europe/Berlin wechat-tz
+#
+#   Japan
+#     Work context: Microsoft Teams, LINE WORKS, Chatwork
+#     Chat context: LINE, WhatsApp, Messenger
+#     WECHAT_TZ=Asia/Tokyo wechat-tz
+#
+#   South Korea
+#     Work context: Microsoft Teams, Slack, KakaoWork
+#     Chat context: KakaoTalk, Telegram, WhatsApp
+#     WECHAT_TZ=Asia/Seoul wechat-tz
+#
+#   Singapore
+#     Work context: Microsoft Teams, Slack, Zoom
+#     Chat context: WhatsApp, Telegram, Messenger
+#     WECHAT_TZ=Asia/Singapore wechat-tz
+#
+# Short examples:
+#   WECHAT_TZ=America/Los_Angeles wechat-tz  # San Francisco, United States
+#   WECHAT_TZ=Asia/Singapore wechat-tz       # Singapore
+#   WECHAT_TZ=Europe/Berlin wechat-tz        # Germany
+
+WECHAT_TZ="${WECHAT_TZ:-Asia/Shanghai}"
+APP_PATH="${APP_PATH:-/Applications/WeChat.app}"
+EXECUTABLE="$APP_PATH/Contents/MacOS/WeChat"
+
+if [[ ! -x "$EXECUTABLE" ]]; then
+  echo "Executable not found: $EXECUTABLE" >&2
+  echo "Set APP_PATH=/path/to/WeChat.app to use a custom app path." >&2
+  exit 1
+fi
+
+if pgrep -x "WeChat" >/dev/null 2>&1; then
+  echo "WeChat is already running."
+  echo "Quit WeChat completely before running this command, otherwise the existing process will not pick up the new TZ value."
+  exit 2
+fi
+
+nohup env TZ="$WECHAT_TZ" "$EXECUTABLE" >/dev/null 2>&1 &
+PID="$!"
+disown "$PID" 2>/dev/null || true
+
+sleep 1
+
+if ps -p "$PID" >/dev/null 2>&1; then
+  echo "Started WeChat with TZ=$WECHAT_TZ"
+else
+  echo "WeChat did not stay running after launch." >&2
+  exit 3
+fi
