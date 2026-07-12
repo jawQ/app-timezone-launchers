@@ -1,0 +1,21 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "release:tag",
+      "type": "shell",
+      "command": "pnpm release:tag",
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [],
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "clear": true,
+        "focus": true
+      },
+      "detail": "Auto patch-bump, create tag, push — triggers GitHub Release CI"
+    }
+  ]
+}

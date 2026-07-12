@@ -38,6 +38,16 @@ Equivalent without npm:
 ./macos/AppTimezoneLauncher/scripts/package-release.sh 0.1.1
 ```
 
+## VS Code / Cursor task (quick trigger)
+
+[`.vscode/tasks.json`](../../.vscode/tasks.json) exposes a single task:
+
+**Command Palette** → **Tasks: Run Task** → **`release:tag`**
+
+Same as `pnpm release:tag` (auto patch-bump + push tag → CI).
+
+Requires clean `master` matching `origin/master` (push commits first if needed).
+
 ## Recommended flow
 
 ```bash
@@ -46,12 +56,13 @@ git status
 git add -A && git commit -m "…"   # if needed
 git push origin master
 
-# 2. Preview next version
+# 2. Preview next version (optional)
 npm run release:tag:dry-run
 # → e.g. Would create and push: v0.1.1
 
 # 3. Publish
 npm run release:tag
+# or VS Code / Cursor: Tasks: Run Task → release:tag
 
 # 4. Wait for CI (optional)
 gh run watch

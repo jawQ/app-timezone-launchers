@@ -49,6 +49,8 @@ npm run release:tag:test              # self-test
 Underlying scripts: `./scripts/release-tag.sh`, `./scripts/generate-release-notes.sh`.  
 Optional curated notes: `docs/release-notes/vX.Y.Z-en.md` (GH default) + `vX.Y.Z-zh.md` (中文入口)
 (see `docs/release-notes/README.md`). CI publishes **English-first** release notes with a Chinese entry link.
+
+**VS Code / Cursor:** `.vscode/tasks.json` — Command Palette → **Tasks: Run Task** → **`release:tag`**.
 ## App identity
 
 The public, stable macOS bundle identifier is **`app.zonelaunch.launcher`**. It is strongly bound

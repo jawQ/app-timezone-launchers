@@ -38,6 +38,16 @@
 ./macos/AppTimezoneLauncher/scripts/package-release.sh 0.1.1
 ```
 
+## VS Code / Cursor 任务（快速触发）
+
+[`.vscode/tasks.json`](../../.vscode/tasks.json) 只提供一个任务：
+
+**命令面板** → **Tasks: Run Task** → **`release:tag`**
+
+等同于 `pnpm release:tag`（自动 patch 递增 + 推送 tag → CI）。
+
+要求工作区干净、`master` 与 `origin/master` 一致（有未推送提交时先 `git push`）。
+
 ## 推荐流程
 
 ```bash
@@ -46,12 +56,13 @@ git status
 git add -A && git commit -m "…"   # 如有需要
 git push origin master
 
-# 2. 预览下一版本
+# 2. 预览下一版本（可选）
 npm run release:tag:dry-run
 # → 例如 Would create and push: v0.1.1
 
 # 3. 正式发版
 npm run release:tag
+# 或 VS Code / Cursor: Tasks: Run Task → release:tag
 
 # 4. 等待 CI（可选）
 gh run watch
