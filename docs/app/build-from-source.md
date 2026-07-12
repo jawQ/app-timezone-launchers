@@ -26,20 +26,38 @@ open /Applications/ZoneLaunch.app
 
 Canonical Bundle ID: **`app.zonelaunch.launcher`** (see `scripts/app-identity.sh`).
 
-## Versioned package (same as CI)
+## Publish a GitHub Release (recommended)
 
-From the repository root:
+Full maintainer guide (prerequisites, all `package.json` scripts, version policy, troubleshooting):
+
+→ **[Publishing releases](releasing.md)**
+
+Quick start from a **clean** `master` that matches `origin/master`:
 
 ```bash
-./macos/AppTimezoneLauncher/scripts/package-release.sh 0.1.0
+npm run release:tag:dry-run        # preview next tag
+npm run release:tag                # auto patch-bump, tag, push → CI builds the zip
+npm run release:tag -- 0.2.0       # explicit version
 ```
 
-Produces under `dist/`:
+| Script | Purpose |
+| --- | --- |
+| `npm run release:tag` | Patch-bump + tag + push |
+| `npm run release:tag -- X.Y.Z` | Explicit version + tag + push |
+| `npm run release:tag:dry-run` | Preview only |
+| `npm run release:tag:test` | Self-test |
+| `npm run release:package` | Local zip only (no GitHub Release) |
 
-- `ZoneLaunch-0.1.0-macos.zip`
-- `SHA256SUMS`
+Same idea as supermarkets `pnpm miniapp:tag`. Implementation: `scripts/release-tag.sh` via root `package.json`.
 
-`dist/` is gitignored.
+## Versioned package (local only, same as CI)
+
+```bash
+npm run release:package -- 0.1.0
+# or: ./macos/AppTimezoneLauncher/scripts/package-release.sh 0.1.0
+```
+
+Produces under `dist/`: `ZoneLaunch-0.1.0-macos.zip`, `SHA256SUMS` (gitignored). **Does not** create a GitHub Release.
 
 ## Verify
 
@@ -54,5 +72,6 @@ plutil -extract CFBundleIdentifier raw ".build/app/ZoneLaunch.app/Contents/Info.
 
 ## See also
 
+- [Publishing releases](releasing.md) — `npm run release:tag` and friends
 - [Install from Releases](install-from-release.md)
 - [Overview](overview.md)

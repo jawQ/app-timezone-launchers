@@ -22,12 +22,30 @@ Release zip 输出到 `dist/`（同样已忽略）。
 
 推送匹配 `v*` 的 tag 会在 `macos-latest` 上运行 `.github/workflows/release-macos-app.yml`：
 测试、`package-release.sh`，并上传 `ZoneLaunch-<version>-macos.zip` 与 `SHA256SUMS`。
-构建仅为 **ad-hoc 签名**（无 Developer ID / 公证）。本地打包：
+构建仅为 **ad-hoc 签名**（无 Developer ID / 公证）。
+
+完整维护者说明：[`docs/app/releasing.zh-CN.md`](docs/app/releasing.zh-CN.md)（[English](docs/app/releasing.md)）。
+
+**推荐本地命令**（根目录 `package.json`，对齐 supermarkets 的 `pnpm miniapp:tag`）：
 
 ```bash
-./macos/AppTimezoneLauncher/scripts/package-release.sh 0.1.0
+# 工作区干净 + 在 master + HEAD == origin/master 时：
+npm run release:tag:dry-run           # 仅预览下一 tag
+npm run release:tag                   # 自动 patch 递增、打 tag、推送
+npm run release:tag -- 0.2.0          # 指定版本
+npm run release:package -- 0.1.1      # 仅本地 zip（不上传 GitHub）
+npm run release:tag:test              # 自检
 ```
 
+| Script | 作用 |
+| --- | --- |
+| `release:tag` | patch 递增 + annotated tag + 推送 → CI |
+| `release:tag -- X.Y.Z` | 指定版本 + tag + 推送 |
+| `release:tag:dry-run` | 仅预览 |
+| `release:tag:test` / `test:release-tag` | 辅助逻辑自检 |
+| `release:package` | 仅 `package-release.sh`（可带版本参数） |
+
+底层脚本：`./scripts/release-tag.sh`。
 ## 应用身份
 
 公开且稳定的 macOS Bundle ID 为 **`app.zonelaunch.launcher`**，对所有构建与安装强绑定：凡从本仓库

@@ -104,7 +104,22 @@ GitHub Releases 提供 **ad-hoc 签名** 预构建包（无需付费苹果开发
 - **下载：** https://github.com/jawQ/app-timezone-launchers/releases/latest  
 - **完整安装与门禁说明：** [从 Release 安装](docs/app/install-from-release.zh-CN.md)  
 - **是什么 / 何时用：** [App 概览](docs/app/overview.zh-CN.md)  
-- **自己构建：** [从源码构建](docs/app/build-from-source.zh-CN.md)
+- **自己构建：** [从源码构建](docs/app/build-from-source.zh-CN.md)  
+- **维护者 — 终端发版：** 见 **[发布 Release](docs/app/releasing.zh-CN.md)**
+
+```bash
+npm run release:tag:dry-run   # 预览下一 vX.Y.Z
+npm run release:tag           # patch 递增 + tag + 推送 → CI 上传 zip
+npm run release:tag -- 0.2.0  # 指定版本
+```
+
+| npm script | 作用 |
+| --- | --- |
+| `release:tag` | 自动 patch 递增、打 tag、推送 |
+| `release:tag -- X.Y.Z` | 指定版本、打 tag、推送 |
+| `release:tag:dry-run` | 仅预览 |
+| `release:tag:test` | 自检 |
+| `release:package` | 仅本地 zip（不发 GitHub Release） |
 
 官方构建 Bundle ID：`app.zonelaunch.launcher`。
 
@@ -132,3 +147,4 @@ GitHub Releases 提供 **ad-hoc 签名** 预构建包（无需付费苹果开发
 | [App 概览](docs/app/overview.zh-CN.md) | 脚本 vs 图形界面 |
 | [从 Release 安装 App](docs/app/install-from-release.zh-CN.md) | 下载 zip、门禁提示 |
 | [从源码构建 App](docs/app/build-from-source.zh-CN.md) | 本地构建 / 打包 |
+| [发布 Release](docs/app/releasing.zh-CN.md) | 维护者：`npm run release:tag` |

@@ -104,7 +104,22 @@ Prebuilt **ad-hoc signed** builds are on GitHub Releases (no paid Apple Develope
 - **Download:** https://github.com/jawQ/app-timezone-launchers/releases/latest  
 - **Full install + Gatekeeper guide:** [Install from Releases](docs/app/install-from-release.md)  
 - **What it is / when to use it:** [App overview](docs/app/overview.md)  
-- **Build yourself:** [Build from source](docs/app/build-from-source.md)
+- **Build yourself:** [Build from source](docs/app/build-from-source.md)  
+- **Maintainers — cut a release:** see **[Publishing releases](docs/app/releasing.md)**
+
+```bash
+npm run release:tag:dry-run   # preview next vX.Y.Z
+npm run release:tag           # patch-bump + tag + push → CI uploads the zip
+npm run release:tag -- 0.2.0  # explicit version
+```
+
+| npm script | Purpose |
+| --- | --- |
+| `release:tag` | Auto patch-bump, tag, push |
+| `release:tag -- X.Y.Z` | Explicit version, tag, push |
+| `release:tag:dry-run` | Preview only |
+| `release:tag:test` | Self-test |
+| `release:package` | Local zip only (no GitHub Release) |
 
 Bundle ID for all official builds: `app.zonelaunch.launcher`.
 
@@ -132,3 +147,4 @@ Later launches work normally. Full guide and alternatives (`xattr`, right-click 
 | [App overview](docs/app/overview.md) | Scripts vs GUI |
 | [Install app from Releases](docs/app/install-from-release.md) | Download zip, Gatekeeper |
 | [Build app from source](docs/app/build-from-source.md) | Local build / package |
+| [Publishing releases](docs/app/releasing.md) | Maintainer: `npm run release:tag` |

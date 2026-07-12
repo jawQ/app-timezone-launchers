@@ -26,20 +26,38 @@ open /Applications/ZoneLaunch.app
 
 规范 Bundle ID：**`app.zonelaunch.launcher`**（见 `scripts/app-identity.sh`）。
 
-## 打出版本包（与 CI 相同）
+## 发布 GitHub Release（推荐）
 
-在仓库根目录：
+完整维护者说明（前提、全部 `package.json` scripts、版本约定、排障）：
+
+→ **[发布 Release](releasing.zh-CN.md)**
+
+在**干净**的 `master` 且与 `origin/master` 一致时，快速开始：
 
 ```bash
-./macos/AppTimezoneLauncher/scripts/package-release.sh 0.1.0
+npm run release:tag:dry-run        # 预览下一 tag
+npm run release:tag                # 自动 patch 递增、打 tag、推送 → CI 打包上传
+npm run release:tag -- 0.2.0       # 指定版本
 ```
 
-在 `dist/` 生成：
+| Script | 作用 |
+| --- | --- |
+| `npm run release:tag` | patch 递增 + tag + 推送 |
+| `npm run release:tag -- X.Y.Z` | 指定版本 + tag + 推送 |
+| `npm run release:tag:dry-run` | 仅预览 |
+| `npm run release:tag:test` | 自检 |
+| `npm run release:package` | 仅本地 zip（不发 GitHub Release） |
 
-- `ZoneLaunch-0.1.0-macos.zip`
-- `SHA256SUMS`
+与 supermarkets 的 `pnpm miniapp:tag` 同思路。实现：`scripts/release-tag.sh`，由根目录 `package.json` 调用。
 
-`dist/` 已被 gitignore。
+## 打出版本包（仅本地，与 CI 相同）
+
+```bash
+npm run release:package -- 0.1.0
+# 或：./macos/AppTimezoneLauncher/scripts/package-release.sh 0.1.0
+```
+
+在 `dist/` 生成 `ZoneLaunch-0.1.0-macos.zip`、`SHA256SUMS`（已 gitignore）。**不会**创建 GitHub Release。
 
 ## 验证
 
@@ -54,5 +72,6 @@ plutil -extract CFBundleIdentifier raw ".build/app/ZoneLaunch.app/Contents/Info.
 
 ## 另见
 
+- [发布 Release](releasing.zh-CN.md) — `npm run release:tag` 等
 - [从 Release 安装](install-from-release.zh-CN.md)
 - [概览](overview.zh-CN.md)

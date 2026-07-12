@@ -22,12 +22,30 @@ both are ignored generated directories. Release zips land in `dist/` (also gitig
 
 Pushing a tag matching `v*` runs `.github/workflows/release-macos-app.yml` on `macos-latest`:
 tests, `package-release.sh`, upload of `ZoneLaunch-<version>-macos.zip` + `SHA256SUMS`.
-Builds are **ad-hoc signed** only (no Developer ID / notarization). Local package:
+Builds are **ad-hoc signed** only (no Developer ID / notarization).
+
+Full maintainer guide: [`docs/app/releasing.md`](docs/app/releasing.md) (and [zh-CN](docs/app/releasing.zh-CN.md)).
+
+**Preferred local commands** (root `package.json`, same idea as supermarkets `pnpm miniapp:tag`):
 
 ```bash
-./macos/AppTimezoneLauncher/scripts/package-release.sh 0.1.0
+# clean tree + on master + HEAD == origin/master, then:
+npm run release:tag:dry-run           # preview next tag
+npm run release:tag                   # auto patch-bump, tag, push
+npm run release:tag -- 0.2.0          # explicit version
+npm run release:package -- 0.1.1      # local zip only (no GitHub upload)
+npm run release:tag:test              # self-test
 ```
 
+| Script | Purpose |
+| --- | --- |
+| `release:tag` | Patch-bump + annotated tag + push → CI |
+| `release:tag -- X.Y.Z` | Explicit version + tag + push |
+| `release:tag:dry-run` | Preview only |
+| `release:tag:test` / `test:release-tag` | Helper unit checks |
+| `release:package` | `package-release.sh` only (optional version arg) |
+
+Underlying script: `./scripts/release-tag.sh`.
 ## App identity
 
 The public, stable macOS bundle identifier is **`app.zonelaunch.launcher`**. It is strongly bound

@@ -11,8 +11,16 @@
 | [概览](../../docs/app/overview.zh-CN.md) / [Overview](../../docs/app/overview.md) | 脚本 vs App |
 | [从 Release 安装](../../docs/app/install-from-release.zh-CN.md) | 下载 zip（推荐） |
 | [从源码构建](../../docs/app/build-from-source.zh-CN.md) | 本地构建与打包 |
+| [发布 Release](../../docs/app/releasing.zh-CN.md) / [Publishing](../../docs/app/releasing.md) | 维护者发版：`npm run release:tag` |
 
 预构建下载：https://github.com/jawQ/app-timezone-launchers/releases/latest
+
+维护者发版（仓库根目录）：
+
+```bash
+npm run release:tag:dry-run
+npm run release:tag
+```
 
 ## 快速本地构建
 
