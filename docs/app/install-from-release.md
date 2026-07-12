@@ -4,13 +4,14 @@
 
 Download a prebuilt **ZoneLaunch.app** without cloning the repo or installing Xcode tooling for day-to-day use.
 
-> Builds are **ad-hoc signed** (no paid Apple Developer certificate, no notarization). That is intentional so the project stays free to ship. macOS Gatekeeper may warn on first open.
+> Builds are **ad-hoc signed** (no paid Apple Developer certificate, **not notarized**). That is intentional so the project stays free to ship. **First open is almost always blocked by macOS Gatekeeper** — this is expected, not a broken download.
 
 ## Download
 
 1. Open the latest release:  
    **https://github.com/jawQ/app-timezone-launchers/releases/latest**
-2. Download `ZoneLaunch-<version>-macos.zip`
+2. Download `ZoneLaunch-<version>-macos.zip` (the prebuilt app).  
+   Ignore **Source code** zip/tar unless you want the full repository.
 3. Optional: check the checksum against `SHA256SUMS` in the same release
 
 ## Install
@@ -32,21 +33,56 @@ rm -rf /Applications/ZoneLaunch.app
 mv ZoneLaunch.app /Applications/
 ```
 
-Open:
+Do **not** expect a double-click to work on the first try after a Release download (see below).
+
+## Why macOS blocks the first open
+
+| Factor | What happens |
+| --- | --- |
+| Downloaded from the internet | macOS marks the file with a **quarantine** attribute |
+| Ad-hoc signature only | Signed without a paid **Developer ID** certificate |
+| Not notarized | Apple did not scan/approve this binary for Gatekeeper |
+
+Gatekeeper then shows a dialog like the one below. Moving the app into **Applications** does **not** remove this block. Double-click or `open` will fail until you explicitly allow the app once.
+
+![Gatekeeper dialog: “ZoneLaunch” Not Opened — click Done, not Move to Trash](images/gatekeeper-not-opened.png)
+
+This is the same class of warning many free open-source Mac apps get when they ship without a $99/year Apple Developer Program membership and notarization. **It is not proof of malware.**
+
+## First open — recommended steps (matches current macOS UI)
+
+### 1. Trigger the block once
+
+Double-click **ZoneLaunch** (in Downloads or Applications). When the yellow-warning dialog appears (screenshot above), click **Done** (do **not** choose **Move to Trash**).
+
+### 2. Allow it in System Settings
+
+1. Open **System Settings** → **Privacy & Security**
+2. Scroll to the security section. You should see a banner like the screenshot below.
+3. Click **Open Anyway**
+4. Confirm again if macOS asks
+
+![Privacy & Security: “ZoneLaunch” was blocked — click Open Anyway](images/gatekeeper-open-anyway.png)
+
+After that, ZoneLaunch opens normally on later launches.
+
+### Alternative: right-click Open
+
+In Finder: **Control-click** (or right-click) **ZoneLaunch** → **Open** → **Open**.  
+On newer macOS versions this alone may not be enough; use **Open Anyway** above if the block dialog returns.
+
+### Optional (advanced): clear quarantine in Terminal
+
+Only if you trust the build (e.g. you verified `SHA256SUMS`):
 
 ```bash
+xattr -dr com.apple.quarantine /Applications/ZoneLaunch.app
 open /Applications/ZoneLaunch.app
 ```
 
-## First open (Gatekeeper)
+## Will this go away in a future release?
 
-Because the app is not notarized:
-
-1. If macOS says the app **cannot be opened** / is from an unidentified developer:
-   - Finder → right-click (or Control-click) **ZoneLaunch** → **Open** → confirm **Open**
-2. Or: **System Settings → Privacy & Security** → allow the blocked app, then open again
-
-This is normal for free, ad-hoc distributed Mac apps.
+Only if the project later ships with **Developer ID** signing + **notarization** (requires a paid Apple Developer account). Until then, the steps above remain the supported install path for Release zips.
 
 ## After upgrading
 

@@ -2,9 +2,17 @@
 
 [English](README.md)
 
-以指定时区启动 macOS 应用，**不**改变系统时区。
+以**指定时区**启动 macOS 应用，与系统时区相互独立。
 
 > 仅支持 macOS。尚未测试 Windows / Linux，因而不提供支持。
+
+## 项目背景
+
+不少人会为工作修改 **macOS 系统时区**——例如对齐远程团队、客户所在地区或公司日历。改完之后，**微信、飞书/Lark** 等社交与即时通讯软件往往会跟随系统设置，应用内的时间戳便与你**实际所处的物理时区**不一致：消息、朋友圈/动态、聊天记录的时间看起来都「偏了」，影响日常生活使用。
+
+本项目针对这一痛点提供解决方案：你可以继续把系统时区设成工作所需，同时用本工具以你关心的时区（通常是**所在地的真实本地时间**）启动指定应用，让应用内时间与日常生活无缝衔接。反过来也同样适用：系统保持本地时区，只让飞书、微信等以某地区时区（如 `Asia/Shanghai`）启动。
+
+技术上，每次启动只向**新进程**注入 `TZ`，不会改写系统时钟；已在运行的应用需退出后，再用本工具重新启动才会生效。
 
 ## 两种用法
 
@@ -91,14 +99,27 @@ rm -f "$HOME/.local/bin/feishu-tz" "$HOME/.local/bin/wechat-tz"
 
 ## ZoneLaunch App（更好体验，可选）
 
-GitHub Releases 提供 **ad-hoc 签名** 预构建包（无需付费苹果开发者账号；首次打开可能需右键 → 打开）。
+GitHub Releases 提供 **ad-hoc 签名** 预构建包（无需付费苹果开发者账号，**未公证**）。
 
 - **下载：** https://github.com/jawQ/app-timezone-launchers/releases/latest  
-- **zip 安装说明：** [从 Release 安装](docs/app/install-from-release.zh-CN.md)  
+- **完整安装与门禁说明：** [从 Release 安装](docs/app/install-from-release.zh-CN.md)  
 - **是什么 / 何时用：** [App 概览](docs/app/overview.zh-CN.md)  
 - **自己构建：** [从源码构建](docs/app/build-from-source.zh-CN.md)
 
 官方构建 Bundle ID：`app.zonelaunch.launcher`。
+
+### 首次打开被拦截 —— 正常现象
+
+下载 zip 后双击会被拦截。仅移到「应用程序」**不会**自动解除。
+
+**原因：** 网络下载的隔离标记 + 仅 ad-hoc 签名 + 未做苹果公证（为保持免费分发）。
+
+| 步骤 | 界面示意 |
+| --- | --- |
+| 1. 双击后点 **Done / 完成**（不要移到废纸篓） | ![无法打开对话框](docs/app/images/gatekeeper-not-opened.png) |
+| 2. **系统设置 → 隐私与安全性** → **Open Anyway / 仍要打开** | ![仍要打开](docs/app/images/gatekeeper-open-anyway.png) |
+
+之后可正常启动。完整说明与备选方案（`xattr`、右键打开）见 [从 Release 安装](docs/app/install-from-release.zh-CN.md)。
 
 ---
 

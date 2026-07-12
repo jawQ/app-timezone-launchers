@@ -2,7 +2,9 @@
 
 [Simplified Chinese](overview.zh-CN.md)
 
-ZoneLaunch is an optional **GUI** for the same idea as the shell launchers: start a macOS app with a chosen `TZ`, without changing the system time zone.
+ZoneLaunch is an optional **GUI** for the same idea as the shell launchers: start a macOS app with a chosen `TZ`, independent of the system time zone.
+
+**Why it exists:** Changing the system time zone for work often makes WeChat, Feishu/Lark, and similar apps show times that no longer match your physical location. ZoneLaunch (and the shell tools) let those apps keep real local time — or any IANA zone you choose — while the system can stay on a work zone (or the reverse).
 
 ## When to use scripts vs the app
 
@@ -32,7 +34,7 @@ Both approaches inject `TZ` into the **new** process only. They can be installed
 
 ## Get the app
 
-1. **Preferred:** [Install from GitHub Releases](install-from-release.md) (ad-hoc signed zip, no paid Apple Developer account)
+1. **Preferred:** [Install from GitHub Releases](install-from-release.md) (ad-hoc signed zip, no paid Apple Developer account). **First open is blocked by Gatekeeper until you click Open Anyway** — see that page.
 2. **Developers:** [Build from source](build-from-source.md)
 
 ## Identity

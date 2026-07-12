@@ -4,13 +4,15 @@
 
 下载预构建的 **ZoneLaunch.app**，日常使用无需 clone 仓库，也无需为日常启动准备完整 Xcode 工具链。
 
-> 构建为 **ad-hoc 签名**（无付费苹果开发者证书、未公证）。这是为了保持免费分发。首次打开时 macOS 门禁（Gatekeeper）可能会提示。
+> 构建为 **ad-hoc 签名**（无付费苹果开发者证书、**未公证**）。这是为了保持免费分发。  
+> **从 Release 下载后第一次打开，几乎一定会被 macOS 拦截**——这是预期行为，不是安装包坏了。
 
 ## 下载
 
 1. 打开最新 Release：  
    **https://github.com/jawQ/app-timezone-launchers/releases/latest**
-2. 下载 `ZoneLaunch-<version>-macos.zip`
+2. 下载 `ZoneLaunch-<version>-macos.zip`（预构建 App）。  
+   **Source code** 的 zip/tar 是整仓库源码，不是现成 App。
 3. 可选：用同页的 `SHA256SUMS` 核对校验和
 
 ## 安装
@@ -32,21 +34,57 @@ rm -rf /Applications/ZoneLaunch.app
 mv ZoneLaunch.app /Applications/
 ```
 
-打开：
+**不要指望**从 Release 下载后双击立刻成功（见下文）。
+
+## 为什么会被拦截
+
+| 原因 | 说明 |
+| --- | --- |
+| 从网络下载 | macOS 会给文件打上 **隔离（quarantine）** 标记 |
+| 仅 ad-hoc 签名 | 没有付费的 **Developer ID** 证书 |
+| 未公证（notarize） | 苹果未对该二进制做 Gatekeeper 认可扫描 |
+
+于是 Gatekeeper 会弹出下图这类对话框。把 App 移到「应用程序」**不会**自动解除拦截。在系统里**明确允许一次**之前，双击或 `open` 都会失败。
+
+![门禁对话框：「ZoneLaunch」无法打开 — 点 Done/完成，不要点移到废纸篓](images/gatekeeper-not-opened.png)
+
+许多免费、开源、未加入苹果付费开发者计划的 Mac 应用都会遇到同类提示。**这不等于应用有病毒。**
+
+## 首次打开 —— 推荐步骤（对应当前系统界面）
+
+### 1. 先触发一次拦截
+
+双击 **ZoneLaunch**（在「下载」或「应用程序」均可）。出现上图带黄色警告的对话框时，点 **Done / 完成**（**不要**点 **Move to Trash / 移到废纸篓**）。
+
+### 2. 在「隐私与安全性」里允许
+
+1. 打开 **系统设置 → 隐私与安全性**（**System Settings → Privacy & Security**）
+2. 向下滚动到安全性相关区域，应能看到下图所示横幅
+3. 点击 **Open Anyway / 仍要打开**
+4. 若再次确认，按提示继续
+
+![隐私与安全性：已阻止 “ZoneLaunch” — 点 Open Anyway / 仍要打开](images/gatekeeper-open-anyway.png)
+
+之后再打开 ZoneLaunch 即可正常使用。
+
+### 备选：右键打开
+
+在 Finder 中对 **ZoneLaunch** **Control-单击**（或右键）→ **打开** → **打开**。  
+较新的 macOS 上有时仍不够，仍需上面的 **Open Anyway**。
+
+### 可选（进阶）：终端清除隔离属性
+
+仅在你信任该构建时使用（例如已核对 `SHA256SUMS`）：
 
 ```bash
+xattr -dr com.apple.quarantine /Applications/ZoneLaunch.app
 open /Applications/ZoneLaunch.app
 ```
 
-## 首次打开（门禁提示）
+## 以后发版还会不会出现？
 
-应用未经公证时：
-
-1. 若提示**无法打开** / 来自身份不明的开发者：
-   - 在 Finder 中对 **ZoneLaunch** 右键（或 Control-单击）→ **打开** → 再确认 **打开**
-2. 或到 **系统设置 → 隐私与安全性**，允许仍被拦截的应用后再打开
-
-对免费、ad-hoc 分发的 Mac 应用，这属于正常情况。
+只要仍用 **免费 ad-hoc 签名、不做公证**，从 Release 下载的用户首次仍会遇到此提示。  
+只有项目将来使用付费 **Developer ID + 公证** 后，双击即开才可能成为默认体验。
 
 ## 升级
 

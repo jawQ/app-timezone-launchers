@@ -2,7 +2,9 @@
 
 [English](overview.md)
 
-ZoneLaunch 是可选的 **图形界面**，与 shell 启动命令做同一件事：以指定 `TZ` 启动 macOS 应用，而不修改系统时区。
+ZoneLaunch 是可选的 **图形界面**，与 shell 启动命令做同一件事：以指定 `TZ` 启动 macOS 应用，与系统时区相互独立。
+
+**存在的意义：** 为工作修改系统时区后，微信、飞书等应用内时间常与实际物理时区不一致。ZoneLaunch（以及 shell 命令）可让这些应用继续显示你所在地的真实时间——或任意 IANA 时区——同时系统仍可保持工作所需时区（反过来也可以）。
 
 ## 什么时候用脚本，什么时候用 App
 
@@ -32,7 +34,7 @@ ZoneLaunch 是可选的 **图形界面**，与 shell 启动命令做同一件事
 
 ## 如何获取
 
-1. **推荐：** [从 GitHub Releases 安装](install-from-release.zh-CN.md)（ad-hoc 签名 zip，无需付费苹果开发者账号）
+1. **推荐：** [从 GitHub Releases 安装](install-from-release.zh-CN.md)（ad-hoc 签名 zip，无需付费苹果开发者账号）。**首次打开会被门禁拦截，需在「隐私与安全性」点「仍要打开」**——详见该页。
 2. **开发者：** [从源码构建](build-from-source.zh-CN.md)
 
 ## 应用身份

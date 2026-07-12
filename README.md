@@ -2,9 +2,17 @@
 
 [Simplified Chinese](README.zh-CN.md)
 
-Launch macOS apps in a chosen time zone **without** changing the system time zone.
+Launch macOS apps in a **chosen time zone** — independent of the system time zone.
 
 > macOS only. Windows and Linux are untested and unsupported.
+
+## Background
+
+Many people change the **macOS system time zone** for work — for example to match a remote team, a client region, or a corporate calendar. After that change, social and messaging apps such as **WeChat**, **Feishu/Lark**, and similar tools often follow the system setting. In-app timestamps then no longer match the **physical time zone** where you actually are: messages, moments, and chat history look “shifted,” which is confusing in daily life.
+
+This project addresses that gap. You can keep the system time zone set for work (or any other need) while starting selected apps under the time zone you care about — typically your **real local time** where you live — so app UI stays aligned with daily life. The same mechanism also works the other way around: leave the system on local time and launch only Feishu, WeChat, or other apps in a regional zone (for example `Asia/Shanghai`).
+
+Technically, each launch injects a `TZ` value into a **new** process only. It does not rewrite the system clock, and already-running apps are unaffected until you quit and relaunch them through these tools.
 
 ## Two ways to use this project
 
@@ -91,14 +99,27 @@ rm -f "$HOME/.local/bin/feishu-tz" "$HOME/.local/bin/wechat-tz"
 
 ## ZoneLaunch app (better UI, optional)
 
-Prebuilt **ad-hoc signed** builds are published on GitHub Releases (no paid Apple Developer account; Gatekeeper may ask you to right-click → Open the first time).
+Prebuilt **ad-hoc signed** builds are on GitHub Releases (no paid Apple Developer account, **not notarized**).
 
 - **Download:** https://github.com/jawQ/app-timezone-launchers/releases/latest  
-- **How to install the zip:** [Install from Releases](docs/app/install-from-release.md)  
+- **Full install + Gatekeeper guide:** [Install from Releases](docs/app/install-from-release.md)  
 - **What it is / when to use it:** [App overview](docs/app/overview.md)  
 - **Build yourself:** [Build from source](docs/app/build-from-source.md)
 
 Bundle ID for all official builds: `app.zonelaunch.launcher`.
+
+### First open is blocked — expected
+
+After downloading the zip, double-click is blocked. Moving the app into Applications does **not** fix this by itself.
+
+**Why:** internet quarantine + ad-hoc signature + no Apple notarization (keeps distribution free).
+
+| Step | What you see |
+| --- | --- |
+| 1. Double-click → click **Done** (not Move to Trash) | ![Not Opened dialog](docs/app/images/gatekeeper-not-opened.png) |
+| 2. **System Settings → Privacy & Security** → **Open Anyway** | ![Open Anyway](docs/app/images/gatekeeper-open-anyway.png) |
+
+Later launches work normally. Full guide and alternatives (`xattr`, right-click Open): [Install from Releases](docs/app/install-from-release.md).
 
 ---
 

@@ -90,10 +90,14 @@ ZoneLaunch ${VERSION}
 ====================
 
 1. Drag ZoneLaunch.app into Applications (or replace the existing copy).
-2. First open: if macOS blocks the app, right-click ZoneLaunch → Open → Open.
-   Builds are ad-hoc signed (no paid Apple Developer certificate / notarization).
+
+2. First open is BLOCKED by macOS (expected — ad-hoc sign, not notarized):
+   - Double-click → dialog “ZoneLaunch Not Opened” → click Done (not Move to Trash).
+   - System Settings → Privacy & Security → “ZoneLaunch was blocked…” → Open Anyway.
+   - Screenshots + full guide:
+     https://github.com/jawQ/app-timezone-launchers/blob/master/docs/app/install-from-release.md
+
 3. Bundle ID: ${CANONICAL_BUNDLE_ID}
-4. Docs: https://github.com/jawQ/app-timezone-launchers/blob/master/docs/app/install-from-release.md
 
 Shell launchers (lighter) still live in the same repository:
   ./install.sh
