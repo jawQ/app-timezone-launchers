@@ -120,6 +120,7 @@ npm run release:tag -- 0.2.0  # 指定版本
 | `release:tag:dry-run` | 仅预览 |
 | `release:tag:test` | 自检 |
 | `release:package` | 仅本地 zip（不发 GitHub Release） |
+| `release:notes -- vX.Y.Z` | 预览中英双语 Release 说明 |
 
 官方构建 Bundle ID：`app.zonelaunch.launcher`。
 

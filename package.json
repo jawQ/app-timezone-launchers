@@ -7,6 +7,7 @@
     "release:tag": "bash scripts/release-tag.sh",
     "release:tag:dry-run": "bash scripts/release-tag.sh --dry-run",
     "release:tag:test": "bash scripts/release-tag.sh --self-test",
+    "release:notes": "bash scripts/generate-release-notes.sh",
     "release:package": "bash macos/AppTimezoneLauncher/scripts/package-release.sh",
     "test:release-tag": "bash scripts/release-tag.sh --self-test"
   }

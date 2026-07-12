@@ -120,6 +120,7 @@ npm run release:tag -- 0.2.0  # explicit version
 | `release:tag:dry-run` | Preview only |
 | `release:tag:test` | Self-test |
 | `release:package` | Local zip only (no GitHub Release) |
+| `release:notes -- vX.Y.Z` | Preview bilingual release notes (EN + 中文) |
 
 Bundle ID for all official builds: `app.zonelaunch.launcher`.
 

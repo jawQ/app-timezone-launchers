@@ -17,6 +17,9 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # Need full history + tags for bilingual changelog (prev tag → this tag).
+          fetch-depth: 0
 
       - name: Resolve version from tag
         id: version
@@ -26,6 +29,9 @@ jobs:
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Packaging version $VERSION (tag $TAG)"
+
+      - name: Fetch tags
+        run: git fetch --force --tags origin
 
       - name: Swift tests
         working-directory: macos/AppTimezoneLauncher
@@ -43,37 +49,21 @@ jobs:
         run: |
           ./macos/AppTimezoneLauncher/scripts/package-release.sh "${{ steps.version.outputs.version }}"
 
+      - name: Generate bilingual release notes
+        run: |
+          ./scripts/generate-release-notes.sh "${{ steps.version.outputs.tag }}" \
+            --output dist/RELEASE_NOTES.md
+          echo "----- RELEASE NOTES PREVIEW -----"
+          cat dist/RELEASE_NOTES.md
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: ZoneLaunch ${{ steps.version.outputs.version }}
-          generate_release_notes: true
+          # Notes already bilingual (curated or auto from git); do not append GH auto notes.
+          generate_release_notes: false
+          body_path: dist/RELEASE_NOTES.md
           files: |
             dist/ZoneLaunch-${{ steps.version.outputs.version }}-macos.zip
             dist/SHA256SUMS
-          body: |
-            ## ZoneLaunch ${{ steps.version.outputs.version }}
-
-            Prebuilt **macOS app** (ad-hoc signed). No paid Apple Developer account is used for this pipeline.
-
-            ### Download
-            - `ZoneLaunch-${{ steps.version.outputs.version }}-macos.zip` — contains `ZoneLaunch.app` + `README-FIRST.txt`
-            - `SHA256SUMS` — checksum
-
-            ### Install
-            1. Unzip, drag **ZoneLaunch.app** to Applications.
-            2. First launch: if Gatekeeper blocks it, **right-click → Open → Open**.
-            3. Details: [Install from Releases](https://github.com/jawQ/app-timezone-launchers/blob/master/docs/app/install-from-release.md)
-
-            ### Shell launchers (lighter default)
-            Most users only need the scripts:
-
-            ```bash
-            git clone https://github.com/jawQ/app-timezone-launchers.git
-            cd app-timezone-launchers
-            ./install.sh --feishu --wechat
-            ```
-
-            ### Identity
-            Bundle ID: `app.zonelaunch.launcher`

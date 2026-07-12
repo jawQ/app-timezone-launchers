@@ -47,6 +47,7 @@ npm run release:tag -- 0.2.0       # 指定版本
 | `npm run release:tag:dry-run` | 仅预览 |
 | `npm run release:tag:test` | 自检 |
 | `npm run release:package` | 仅本地 zip（不发 GitHub Release） |
+| `npm run release:notes -- vX.Y.Z` | 预览中英双语 Release 说明 |
 
 与 supermarkets 的 `pnpm miniapp:tag` 同思路。实现：`scripts/release-tag.sh`，由根目录 `package.json` 调用。
 

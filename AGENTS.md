@@ -44,8 +44,11 @@ npm run release:tag:test              # self-test
 | `release:tag:dry-run` | Preview only |
 | `release:tag:test` / `test:release-tag` | Helper unit checks |
 | `release:package` | `package-release.sh` only (optional version arg) |
+| `release:notes -- vX.Y.Z` | Preview bilingual release notes |
 
-Underlying script: `./scripts/release-tag.sh`.
+Underlying scripts: `./scripts/release-tag.sh`, `./scripts/generate-release-notes.sh`.  
+Optional curated notes (cc-switch style): `docs/release-notes/vX.Y.Z-zh.md` + `vX.Y.Z-en.md`
+(see `docs/release-notes/README.md`). CI attaches Chinese-first release notes with an English link.
 ## App identity
 
 The public, stable macOS bundle identifier is **`app.zonelaunch.launcher`**. It is strongly bound

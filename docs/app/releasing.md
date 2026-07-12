@@ -26,6 +26,7 @@ Run from the **repository root**.
 | `npm run release:tag:test` | Self-test version helpers |
 | `npm run test:release-tag` | Same as `release:tag:test` |
 | `npm run release:package` | Local zip only via `package-release.sh` (optional version: `npm run release:package -- 0.1.1`) — **does not** create a GitHub Release |
+| `npm run release:notes -- v0.1.2` | Preview **bilingual** release notes (EN + 中文) for a tag |
 
 Equivalent without npm:
 
@@ -75,10 +76,39 @@ Tags must look like `v1.2.3` (three numeric parts). The workflow matches `v*`.
 
 - `ZoneLaunch-<version>-macos.zip` — ad-hoc signed app + `README-FIRST.txt`
 - `SHA256SUMS`
+- **Bilingual release notes** (English + 中文) on the GitHub Release page
 - GitHub’s automatic source zip/tar (not the app)
 
 Builds are **not notarized**. End-user Gatekeeper steps: [Install from Releases](install-from-release.md).
 
+## Release notes (cc-switch style)
+
+Layout is aligned with [cc-switch releases](https://github.com/farion1231/cc-switch/releases):
+
+1. **Chinese first** on the GitHub Release page  
+2. Top link **[English →](…)** to a full English file  
+3. Sections such as **概览** / **重点内容** / details, then **下载与安装**  
+4. Meta line: release date + commit/diff scale  
+
+CI runs `scripts/generate-release-notes.sh` and sets `body_path` on the Release.
+
+### Curated notes (recommended)
+
+```text
+docs/release-notes/vX.Y.Z-zh.md   # Chinese body (GH Release default)
+docs/release-notes/vX.Y.Z-en.md   # English full text (linked)
+```
+
+See [docs/release-notes/README.md](../release-notes/README.md).
+
+### Auto notes
+
+If `vX.Y.Z-zh.md` is missing, notes are built from `git log` (概览 + 重点内容 + 提交列表 + English auto section).
+
+```bash
+pnpm release:notes -- v0.1.2
+./scripts/generate-release-notes.sh v0.1.2 --write-en-auto   # draft EN file
+```
 ## Relation to supermarkets
 
 Same idea as `pnpm miniapp:tag` there: a local script creates and pushes a version tag; CI does the heavy build/upload.

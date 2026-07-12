@@ -44,8 +44,11 @@ npm run release:tag:test              # 自检
 | `release:tag:dry-run` | 仅预览 |
 | `release:tag:test` / `test:release-tag` | 辅助逻辑自检 |
 | `release:package` | 仅 `package-release.sh`（可带版本参数） |
+| `release:notes -- vX.Y.Z` | 预览中英双语 Release 说明 |
 
-底层脚本：`./scripts/release-tag.sh`。
+底层脚本：`./scripts/release-tag.sh`、`./scripts/generate-release-notes.sh`。  
+可选手写日志（对齐 cc-switch）：`docs/release-notes/vX.Y.Z-zh.md` + `vX.Y.Z-en.md`
+（见 `docs/release-notes/README.zh-CN.md`）。CI 以中文为 Release 正文，并链接英文全文。
 ## 应用身份
 
 公开且稳定的 macOS Bundle ID 为 **`app.zonelaunch.launcher`**，对所有构建与安装强绑定：凡从本仓库

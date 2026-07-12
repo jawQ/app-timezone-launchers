@@ -26,6 +26,7 @@
 | `npm run release:tag:test` | 版本辅助逻辑自检 |
 | `npm run test:release-tag` | 同 `release:tag:test` |
 | `npm run release:package` | 仅本地打 zip（可传版本：`npm run release:package -- 0.1.1`）——**不会**创建 GitHub Release |
+| `npm run release:notes -- v0.1.2` | 预览某版本的**中英双语** Release 说明 |
 
 不用 npm 时等价命令：
 
@@ -75,10 +76,39 @@ tag 必须是 `v1.2.3` 这种三段数字。workflow 匹配 `v*`。
 
 - `ZoneLaunch-<version>-macos.zip` — ad-hoc 签名的 App + `README-FIRST.txt`
 - `SHA256SUMS`
+- GitHub Release 页面上的**中英双语版本日志**
 - GitHub 自动附带的源码 zip/tar（不是 App）
 
 构建**未公证**。终端用户门禁步骤见：[从 Release 安装](install-from-release.zh-CN.md)。
 
+## 更新日志（对齐 cc-switch）
+
+风格参考 [cc-switch Releases](https://github.com/farion1231/cc-switch/releases)：
+
+1. **GitHub Release 默认中文**  
+2. 顶部 **[English →](…)** 链到英文全文  
+3. 章节：**概览** / **重点内容** / 明细 → **下载与安装**  
+4. 附带：发布日期、commit / diff 规模  
+
+CI 运行 `scripts/generate-release-notes.sh`，通过 `body_path` 写入 Release 描述。
+
+### 手写说明（推荐）
+
+```text
+docs/release-notes/vX.Y.Z-zh.md   # 中文正文（Release 默认）
+docs/release-notes/vX.Y.Z-en.md   # 英文全文（顶部链接）
+```
+
+详见 [docs/release-notes/README.zh-CN.md](../release-notes/README.zh-CN.md)。
+
+### 自动生成
+
+若无 `vX.Y.Z-zh.md`，则根据 `git log` 自动生成（概览 + 重点 + 提交列表 + 英文小节）。
+
+```bash
+pnpm release:notes -- v0.1.2
+./scripts/generate-release-notes.sh v0.1.2 --write-en-auto   # 起草英文文件
+```
 ## 与 supermarkets 的对应
 
 与那边 `pnpm miniapp:tag` 同思路：本地脚本创建并推送版本 tag，由 CI 负责构建与上传。

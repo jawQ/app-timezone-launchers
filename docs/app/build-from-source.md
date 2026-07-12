@@ -47,6 +47,7 @@ npm run release:tag -- 0.2.0       # explicit version
 | `npm run release:tag:dry-run` | Preview only |
 | `npm run release:tag:test` | Self-test |
 | `npm run release:package` | Local zip only (no GitHub Release) |
+| `npm run release:notes -- vX.Y.Z` | Preview bilingual release notes |
 
 Same idea as supermarkets `pnpm miniapp:tag`. Implementation: `scripts/release-tag.sh` via root `package.json`.
 
