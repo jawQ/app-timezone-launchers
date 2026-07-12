@@ -1,22 +1,14 @@
 #!/usr/bin/env bash
-# Build GitHub Release notes (English default + Chinese entry).
+# Build GitHub Release notes: always both languages.
 #
-# Layout (inspired by structured multi-language notes, e.g. cc-switch):
-#   - English is the default language on the Release page
-#   - Chinese is linked at the top: **[中文 →](.../vX.Y.Z-zh.md)**
-#   - Sections: Overview / Highlights / details + download footer
+# - English file / Release body: English UI only (commit subjects as in git)
+# - Chinese file: Chinese UI only (commit subjects as in git)
+# - GitHub Release page defaults to English and links to full Chinese notes
 #
 # Usage:
 #   ./scripts/generate-release-notes.sh v0.1.2
 #   ./scripts/generate-release-notes.sh v0.1.2 --output dist/RELEASE_NOTES.md
-#
-# Curated sources (optional, under docs/release-notes/):
-#   vX.Y.Z-en.md   English body (**preferred** for GH Release description)
-#   vX.Y.Z-zh.md   Chinese full notes (linked from the Release page)
-#
-# If curated EN is missing, notes are auto-built from git history (English only).
-# Chinese never appears in the Release body except the optional **[中文 →]** entry link
-# (and raw commit subjects, which are left as written in git).
+#   ./scripts/generate-release-notes.sh v0.1.2 --write-files   # write/update docs/release-notes/v*-{en,zh}.md
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -34,11 +26,20 @@ usage() {
   cat <<'EOF'
 Usage:
   ./scripts/generate-release-notes.sh vX.Y.Z [--output PATH] [--print]
-  ./scripts/generate-release-notes.sh vX.Y.Z --write-zh-auto
+  ./scripts/generate-release-notes.sh vX.Y.Z --write-files
 
-English is the default Release body (all UI copy in English).
-Chinese is only a top entry link to docs/release-notes/vX.Y.Z-zh.md when that file exists.
-Commit subjects are listed as recorded in git (may be Chinese or English).
+Every release has two languages:
+  - English (default on GitHub Release page)
+  - Chinese (entry link → full Chinese notes)
+
+English body never embeds Chinese prose (except raw git commit subjects).
+Chinese notes never embed English prose (except raw git commit subjects).
+
+Curated sources (preferred):
+  docs/release-notes/vX.Y.Z-en.md
+  docs/release-notes/vX.Y.Z-zh.md
+
+If either is missing, it is auto-generated from git for that language only.
 EOF
 }
 
@@ -111,10 +112,11 @@ diff_stat_line() {
 
 commit_bullets() {
   local range="$1"
+  local empty_msg="$2"
   local log
   log="$(git log --pretty=format:'- %s' --no-merges "$range" 2>/dev/null || true)"
   if [[ -z "$log" ]]; then
-    printf '%s\n' "- (no non-merge commits in this range)"
+    printf '%s\n' "$empty_msg"
     return
   fi
   printf '%s\n' "$log"
@@ -122,7 +124,14 @@ commit_bullets() {
 
 highlight_bullets() {
   local range="$1"
-  git log --pretty=format:'- %s' --no-merges "$range" 2>/dev/null | head -8 || true
+  local empty_msg="$2"
+  local log
+  log="$(git log --pretty=format:'- %s' --no-merges "$range" 2>/dev/null | head -8 || true)"
+  if [[ -z "$log" ]]; then
+    printf '%s\n' "$empty_msg"
+    return
+  fi
+  printf '%s\n' "$log"
 }
 
 release_date() {
@@ -134,50 +143,6 @@ release_date() {
   fi
 }
 
-download_footer_en() {
-  local version="$1"
-  cat <<EOF
-
----
-
-## Download & install
-
-**Assets**
-
-- \`ZoneLaunch-${version}-macos.zip\` — \`ZoneLaunch.app\` + \`README-FIRST.txt\` (ad-hoc signed, **not notarized**)
-- \`SHA256SUMS\` — checksum
-
-**Install**
-
-1. Unzip and drag **ZoneLaunch.app** into Applications.
-2. First open is often blocked by Gatekeeper: **Done**, then **System Settings → Privacy & Security → Open Anyway**.
-3. Guide with screenshots: [Install from Releases](https://github.com/$(repo_slug)/blob/master/docs/app/install-from-release.md)
-
-**Lighter path: shell launchers**
-
-\`\`\`bash
-git clone https://github.com/$(repo_slug).git
-cd app-timezone-launchers
-./install.sh --feishu --wechat
-\`\`\`
-
-**Identity:** Bundle ID \`app.zonelaunch.launcher\`
-EOF
-}
-
-# Only emit a Chinese entry when a full Chinese notes file is in the tree.
-# Never embed Chinese prose in the default Release body.
-zh_entry_link() {
-  local tag="$1"
-  local slug
-  slug="$(repo_slug)"
-  if [[ -f "$NOTES_DIR/${tag}-zh.md" ]]; then
-    printf '**[中文 →](https://github.com/%s/blob/%s/docs/release-notes/%s-zh.md)**\n' \
-      "$slug" "$tag" "$tag"
-  fi
-}
-
-# Strip a leading "# ZoneLaunch ..." title from curated files (generator adds it).
 strip_leading_title() {
   local file="$1"
   awk '
@@ -188,7 +153,9 @@ strip_leading_title() {
   ' "$file"
 }
 
-build_auto_en() {
+# --- English content (English UI only) ---
+
+build_en_auto() {
   local tag="$1"
   local version="${tag#v}"
   local prev range commits files_stat date highlights bullets
@@ -197,20 +164,16 @@ build_auto_en() {
   commits="$(commit_count "$range")"
   files_stat="$(diff_stat_line "$range")"
   date="$(release_date "$tag")"
-  highlights="$(highlight_bullets "$range")"
-  bullets="$(commit_bullets "$range")"
-  [[ -n "$highlights" ]] || highlights="- (none)"
+  highlights="$(highlight_bullets "$range" "- (none)")"
+  bullets="$(commit_bullets "$range" "- (no non-merge commits in this range)")"
   [[ -n "$files_stat" ]] || files_stat="(no diff stat)"
-
   local prev_label="${prev:-the initial commit}"
 
-  {
-    printf '# ZoneLaunch %s\n\n' "$tag"
-    printf '> ZoneLaunch **%s** updates since **%s**. See **Highlights** and **Commits** below.\n\n' \
-      "$version" "$prev_label"
-    zh_entry_link "$tag"
-    [[ -f "$NOTES_DIR/${tag}-zh.md" ]] && printf '\n'
-    cat <<EOF
+  cat <<EOF
+# ZoneLaunch ${tag}
+
+> ZoneLaunch **${version}** updates since **${prev_label}**.
+
 ---
 
 ## Overview
@@ -234,64 +197,113 @@ ${highlights}
 ${bullets}
 
 _Commit subjects are shown as recorded in git (may be Chinese or English)._
+
+---
+
+## Download & install
+
+**Assets**
+
+- \`ZoneLaunch-${version}-macos.zip\` — \`ZoneLaunch.app\` + \`README-FIRST.txt\` (ad-hoc signed, **not notarized**)
+- \`SHA256SUMS\` — checksum
+- \`RELEASE_NOTES.zh-CN.md\` — full release notes in Chinese
+
+**Install**
+
+1. Unzip and drag **ZoneLaunch.app** into Applications.
+2. First open is often blocked by Gatekeeper: **Done**, then **System Settings → Privacy & Security → Open Anyway**.
+3. Guide with screenshots: [Install from Releases](https://github.com/$(repo_slug)/blob/master/docs/app/install-from-release.md)
+
+**Lighter path: shell launchers**
+
+\`\`\`bash
+git clone https://github.com/$(repo_slug).git
+cd app-timezone-launchers
+./install.sh --feishu --wechat
+\`\`\`
+
+**Identity:** Bundle ID \`app.zonelaunch.launcher\`
 EOF
-    download_footer_en "$version"
-  }
 }
 
-build_from_curated_en() {
+build_en_from_curated() {
   local tag="$1"
   local version="${tag#v}"
   local en_path="$NOTES_DIR/${tag}-en.md"
-  local date prev range commits files_stat en_body
+  local date prev range commits files_stat body
   date="$(release_date "$tag")"
   prev="$(previous_tag "$tag")"
   range="$(resolve_range "$tag")"
   commits="$(commit_count "$range")"
   files_stat="$(diff_stat_line "$range")"
   [[ -n "$files_stat" ]] || files_stat="n/a"
-  en_body="$(strip_leading_title "$en_path")"
+  body="$(strip_leading_title "$en_path")"
 
-  {
-    printf '# ZoneLaunch %s\n\n' "$tag"
-    zh_entry_link "$tag"
-    [[ -f "$NOTES_DIR/${tag}-zh.md" ]] && printf '\n'
-    printf '%s\n' "$en_body"
-    cat <<EOF
+  cat <<EOF
+# ZoneLaunch ${tag}
+
+${body}
 
 ---
 
 **Release date:** ${date}
 
 **Scale:** ${commits} commits | ${files_stat}${prev:+ | since ${prev}}
+
+---
+
+## Download & install
+
+**Assets**
+
+- \`ZoneLaunch-${version}-macos.zip\` — \`ZoneLaunch.app\` + \`README-FIRST.txt\` (ad-hoc signed, **not notarized**)
+- \`SHA256SUMS\` — checksum
+- \`RELEASE_NOTES.zh-CN.md\` — full release notes in Chinese
+
+**Install**
+
+1. Unzip and drag **ZoneLaunch.app** into Applications.
+2. First open is often blocked by Gatekeeper: **Done**, then **System Settings → Privacy & Security → Open Anyway**.
+3. Guide with screenshots: [Install from Releases](https://github.com/$(repo_slug)/blob/master/docs/app/install-from-release.md)
+
+**Lighter path: shell launchers**
+
+\`\`\`bash
+git clone https://github.com/$(repo_slug).git
+cd app-timezone-launchers
+./install.sh --feishu --wechat
+\`\`\`
+
+**Identity:** Bundle ID \`app.zonelaunch.launcher\`
 EOF
-    download_footer_en "$version"
-  }
 }
 
-# Draft Chinese file from git for maintainers.
-build_auto_zh_file() {
+# --- Chinese content (Chinese UI only) ---
+
+build_zh_auto() {
   local tag="$1"
   local version="${tag#v}"
-  local prev range commits files_stat date bullets
+  local prev range commits files_stat date highlights bullets
   prev="$(previous_tag "$tag")"
   range="$(resolve_range "$tag")"
   commits="$(commit_count "$range")"
   files_stat="$(diff_stat_line "$range")"
   date="$(release_date "$tag")"
-  bullets="$(commit_bullets "$range")"
+  highlights="$(highlight_bullets "$range" "- （无）")"
+  bullets="$(commit_bullets "$range" "- （本区间无非 merge 提交）")"
   [[ -n "$files_stat" ]] || files_stat="（无 diff 统计）"
+  local prev_label="${prev:-初始提交}"
 
   cat <<EOF
-> ZoneLaunch **${version}** 相对 **${prev:-初始提交}** 的更新。
+# ZoneLaunch ${tag}
 
-**[English →](https://github.com/$(repo_slug)/blob/${tag}/docs/release-notes/${tag}-en.md)**
+> ZoneLaunch **${version}** 相对 **${prev_label}** 的更新。
 
 ---
 
 ## 概览
 
-ZoneLaunch ${tag} 是 ${prev:-初始提交} 之后的一版更新。
+ZoneLaunch ${tag} 是 ${prev_label} 之后的一版更新，涵盖脚本启动器与 ZoneLaunch App 的文档、打包与安装说明。
 
 **发布日期**：${date}
 
@@ -301,29 +313,135 @@ ZoneLaunch ${tag} 是 ${prev:-初始提交} 之后的一版更新。
 
 ## 重点内容
 
-$(highlight_bullets "$range")
+${highlights}
 
 ---
 
 ## 提交列表
 
 ${bullets}
+
+_提交说明保持 git 原文（可能为中文或英文）。_
+
+---
+
+## 下载与安装
+
+**资源**
+
+- \`ZoneLaunch-${version}-macos.zip\` — \`ZoneLaunch.app\` + \`README-FIRST.txt\`（ad-hoc 签名，**未公证**）
+- \`SHA256SUMS\` — 校验和
+- \`RELEASE_NOTES.md\` — 英文版更新说明（GitHub Release 默认展示）
+
+**安装步骤**
+
+1. 解压后将 **ZoneLaunch.app** 拖到「应用程序」。
+2. 首次打开常被门禁拦截：点 **Done / 完成**，再到 **系统设置 → 隐私与安全性 → Open Anyway / 仍要打开**。
+3. 图文说明：[从 Release 安装](https://github.com/$(repo_slug)/blob/master/docs/app/install-from-release.zh-CN.md)
+
+**更轻量：Shell 启动命令**
+
+\`\`\`bash
+git clone https://github.com/$(repo_slug).git
+cd app-timezone-launchers
+./install.sh --feishu --wechat
+\`\`\`
+
+**应用身份：** Bundle ID \`app.zonelaunch.launcher\`
 EOF
 }
 
-generate() {
+build_zh_from_curated() {
   local tag="$1"
-  local en_path="$NOTES_DIR/${tag}-en.md"
+  local version="${tag#v}"
+  local zh_path="$NOTES_DIR/${tag}-zh.md"
+  local date prev range commits files_stat body
+  date="$(release_date "$tag")"
+  prev="$(previous_tag "$tag")"
+  range="$(resolve_range "$tag")"
+  commits="$(commit_count "$range")"
+  files_stat="$(diff_stat_line "$range")"
+  [[ -n "$files_stat" ]] || files_stat="n/a"
+  body="$(strip_leading_title "$zh_path")"
 
-  if [[ -f "$en_path" ]]; then
-    build_from_curated_en "$tag"
+  # If curated already has download section, still wrap with title/meta when missing title
+  cat <<EOF
+# ZoneLaunch ${tag}
+
+${body}
+
+---
+
+**发布日期**：${date}
+
+**更新规模**：${commits} commits | ${files_stat}${prev:+ | 自 ${prev} 起}
+EOF
+}
+
+resolve_en_content() {
+  local tag="$1"
+  if [[ -f "$NOTES_DIR/${tag}-en.md" ]]; then
+    build_en_from_curated "$tag"
   else
-    build_auto_en "$tag"
+    build_en_auto "$tag"
+  fi
+}
+
+resolve_zh_content() {
+  local tag="$1"
+  if [[ -f "$NOTES_DIR/${tag}-zh.md" ]]; then
+    build_zh_from_curated "$tag"
+  else
+    build_zh_auto "$tag"
+  fi
+}
+
+# English Release body: English notes + Chinese entry only (no Chinese prose).
+build_release_body_en() {
+  local tag="$1"
+  local version="${tag#v}"
+  local slug en_body
+  slug="$(repo_slug)"
+  en_body="$(resolve_en_content "$tag")"
+  # Drop leading H1 from content so we control title + 中文 link placement
+  en_body="$(printf '%s\n' "$en_body" | awk '
+    BEGIN { skip=1 }
+    skip && /^# ZoneLaunch/ { next }
+    skip && /^[[:space:]]*$/ { next }
+    { skip=0; print }
+  ')"
+
+  cat <<EOF
+# ZoneLaunch ${tag}
+
+**[中文 →](https://github.com/${slug}/releases/download/${tag}/RELEASE_NOTES.zh-CN.md)**
+
+${en_body}
+EOF
+}
+
+write_notes_files() {
+  local tag="$1"
+  mkdir -p "$NOTES_DIR"
+
+  # Prefer existing curated sources; only draft missing language files.
+  if [[ ! -f "$NOTES_DIR/${tag}-en.md" ]]; then
+    build_en_auto "$tag" >"$NOTES_DIR/${tag}-en.md"
+    echo "Wrote $NOTES_DIR/${tag}-en.md (auto English draft)" >&2
+  else
+    echo "Keep existing $NOTES_DIR/${tag}-en.md" >&2
+  fi
+
+  if [[ ! -f "$NOTES_DIR/${tag}-zh.md" ]]; then
+    build_zh_auto "$tag" >"$NOTES_DIR/${tag}-zh.md"
+    echo "Wrote $NOTES_DIR/${tag}-zh.md (auto Chinese draft)" >&2
+  else
+    echo "Keep existing $NOTES_DIR/${tag}-zh.md" >&2
   fi
 }
 
 main() {
-  local tag="" output="" do_print=0 write_zh_auto=0
+  local tag="" output="" do_print=0 write_files=0
   while [[ $# -gt 0 ]]; do
     case "$1" in
       -h | --help)
@@ -339,8 +457,13 @@ main() {
         do_print=1
         shift
         ;;
-      --write-zh-auto)
-        write_zh_auto=1
+      --write-files)
+        write_files=1
+        shift
+        ;;
+      --write-zh-auto | --write-en-auto)
+        # Back-compat aliases → always both files
+        write_files=1
         shift
         ;;
       -*)
@@ -358,24 +481,29 @@ main() {
   command -v git >/dev/null 2>&1 || die "missing git"
   tag="$(normalize_tag "$tag")"
 
-  if (( write_zh_auto )); then
-    mkdir -p "$NOTES_DIR"
-    local zh_out="$NOTES_DIR/${tag}-zh.md"
-    build_auto_zh_file "$tag" >"$zh_out"
-    echo "Wrote $zh_out" >&2
+  if (( write_files )); then
+    write_notes_files "$tag"
   fi
 
-  local notes
-  notes="$(generate "$tag")"
+  mkdir -p dist
+  local en_body zh_body
+  en_body="$(build_release_body_en "$tag")"
+  zh_body="$(resolve_zh_content "$tag")"
 
-  if [[ -n "$output" ]]; then
+  # Always materialize both language artifacts for CI / local inspection
+  printf '%s\n' "$en_body" >"dist/RELEASE_NOTES.md"
+  printf '%s\n' "$zh_body" >"dist/RELEASE_NOTES.zh-CN.md"
+  echo "Wrote dist/RELEASE_NOTES.md (English, GitHub Release body)" >&2
+  echo "Wrote dist/RELEASE_NOTES.zh-CN.md (Chinese, full notes)" >&2
+
+  if [[ -n "$output" && "$output" != "dist/RELEASE_NOTES.md" ]]; then
     mkdir -p "$(dirname "$output")"
-    printf '%s\n' "$notes" >"$output"
+    printf '%s\n' "$en_body" >"$output"
     echo "Wrote $output" >&2
   fi
 
-  if (( do_print )) || [[ -z "$output" ]]; then
-    printf '%s\n' "$notes"
+  if (( do_print )); then
+    printf '%s\n' "$en_body"
   fi
 }
 

@@ -2,84 +2,39 @@
 
 [简体中文](README.zh-CN.md)
 
-GitHub Release pages use **English by default**, with a top **Chinese entry** link (same multi-language idea as structured notes on [cc-switch](https://github.com/farion1231/cc-switch/releases), language priority flipped for this project).
+**Every version has both languages.**
 
-1. **English** = default body on the Release page  
-2. **[中文 →](…)** links to full Chinese notes  
-3. Sections: **Overview** → **Highlights** → details → **Download & install**
+| | English | Chinese |
+| --- | --- | --- |
+| Content | English UI only | Chinese UI only |
+| GitHub Release page | **Default body** | **[中文 →]** entry → full notes file |
+| Source of truth | `vX.Y.Z-en.md` (optional curated) | `vX.Y.Z-zh.md` (optional curated) |
+| CI always uploads | `RELEASE_NOTES.md` (body) | `RELEASE_NOTES.zh-CN.md` (asset) |
 
-## Files per version
+Commit subjects are never translated; they stay as written in git.
 
-| File | Role |
-| --- | --- |
-| `vX.Y.Z-en.md` | English changelog (**preferred** for GH Release body) |
-| `vX.Y.Z-zh.md` | Full Chinese notes (linked from the Release page) |
+Do **not** mix languages inside one file (no English paragraphs in the Chinese file, no Chinese paragraphs in the English file), except the single language-switch entry on the Release page.
 
-Example: `v0.1.2-en.md`, `v0.1.2-zh.md`
+## Files
 
-## English template (`vX.Y.Z-en.md`)
-
-Do **not** put the `# ZoneLaunch vX.Y.Z` title or the Chinese link — the generator adds those.
-
-```markdown
-> One-paragraph summary of this release.
-
----
-
-## Overview
-
-…
-
-## Highlights
-
-- **Item:** details
-
-## Changes
-
-### Subsection
-
-…
+```text
+docs/release-notes/v0.1.2-en.md   # English
+docs/release-notes/v0.1.2-zh.md   # Chinese
 ```
 
-## Chinese template (`vX.Y.Z-zh.md`)
+If either file is missing at release time, CI **auto-generates** that language from git. Prefer writing both before tagging.
 
-Full Chinese page (may include its own title and download section):
+## Draft both languages
 
-```markdown
-# ZoneLaunch vX.Y.Z
-
-> 一句话摘要。
-
-**[English →](https://github.com/jawQ/app-timezone-launchers/blob/vX.Y.Z/docs/release-notes/vX.Y.Z-en.md)**
-
----
-
-## 概览
-
-…
-
-## 重点内容
-
-- …
-
-## 下载与安装
-
-…
+```bash
+./scripts/generate-release-notes.sh v0.1.2 --write-files
+# edit docs/release-notes/v0.1.2-en.md and v0.1.2-zh.md
+# commit, push master, then pnpm release:tag
 ```
 
-## Workflow
-
-1. Write `docs/release-notes/vX.Y.Z-en.md` (+ recommended `-zh.md`).  
-2. Commit and push to `master`.  
-3. `pnpm release:tag` / `npm run release:tag`.  
-4. CI runs `scripts/generate-release-notes.sh` and publishes the English body with a Chinese link.
-
-### Auto mode
-
-If `vX.Y.Z-en.md` is missing, the Release body is **English-only** from git (overview / highlights / commits).  
-Commit subjects are not rewritten. Chinese appears **only** via **[中文 →]** when `vX.Y.Z-zh.md` exists in the repo at that tag.
+## Preview English Release body
 
 ```bash
 pnpm release:notes -- v0.1.2
-./scripts/generate-release-notes.sh v0.1.2 --write-zh-auto   # draft Chinese file; commit before tagging
+# writes dist/RELEASE_NOTES.md + dist/RELEASE_NOTES.zh-CN.md
 ```

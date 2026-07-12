@@ -49,21 +49,25 @@ jobs:
         run: |
           ./macos/AppTimezoneLauncher/scripts/package-release.sh "${{ steps.version.outputs.version }}"
 
-      - name: Generate bilingual release notes
+      - name: Generate release notes (EN body + ZH full file)
         run: |
-          ./scripts/generate-release-notes.sh "${{ steps.version.outputs.tag }}" \
-            --output dist/RELEASE_NOTES.md
-          echo "----- RELEASE NOTES PREVIEW -----"
+          ./scripts/generate-release-notes.sh "${{ steps.version.outputs.tag }}"
+          test -f dist/RELEASE_NOTES.md
+          test -f dist/RELEASE_NOTES.zh-CN.md
+          echo "----- ENGLISH (Release body) -----"
           cat dist/RELEASE_NOTES.md
+          echo "----- CHINESE (asset) -----"
+          cat dist/RELEASE_NOTES.zh-CN.md
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ steps.version.outputs.tag }}
           name: ZoneLaunch ${{ steps.version.outputs.version }}
-          # Notes already bilingual (curated or auto from git); do not append GH auto notes.
+          # English body; Chinese is RELEASE_NOTES.zh-CN.md (linked as 中文 entry).
           generate_release_notes: false
           body_path: dist/RELEASE_NOTES.md
           files: |
             dist/ZoneLaunch-${{ steps.version.outputs.version }}-macos.zip
             dist/SHA256SUMS
+            dist/RELEASE_NOTES.zh-CN.md

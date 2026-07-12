@@ -87,40 +87,31 @@ tag 必须是 `v1.2.3` 这种三段数字。workflow 匹配 `v*`。
 
 - `ZoneLaunch-<version>-macos.zip` — ad-hoc 签名的 App + `README-FIRST.txt`
 - `SHA256SUMS`
-- GitHub Release 页面上的**中英双语版本日志**
+- **版本日志（每版固定两种语言）**
+  - 英文：Release 页默认正文（`RELEASE_NOTES.md`）
+  - 中文：完整说明附件（`RELEASE_NOTES.zh-CN.md`）+ 顶部 **[中文 →]** 入口
 - GitHub 自动附带的源码 zip/tar（不是 App）
 
 构建**未公证**。终端用户门禁步骤见：[从 Release 安装](install-from-release.zh-CN.md)。
 
-## 更新日志（默认英文 + 中文入口）
+## 版本日志（始终中英各一份，互不夹带）
 
-结构参考 [cc-switch](https://github.com/farion1231/cc-switch/releases) 的多语言写法，本项目**默认英文**：
+| | 英文 | 中文 |
+| --- | --- | --- |
+| 说明文字语言 | 只写英文 | 只写中文 |
+| GitHub | **默认正文** | **[中文 →]** → `RELEASE_NOTES.zh-CN.md` |
+| 可选手写 | `docs/release-notes/vX.Y.Z-en.md` | `docs/release-notes/vX.Y.Z-zh.md` |
 
-1. **GitHub Release 默认英文**  
-2. 顶部 **[中文 →](…)** 进入完整中文说明  
-3. 章节：**Overview / Highlights** → 明细 → **Download & install**  
-4. 附带：发布日期、commit / diff 规模  
+提交说明**不翻译**。同一说明文件内不要中英夹带。
 
-CI 运行 `scripts/generate-release-notes.sh`，通过 `body_path` 写入 Release 描述。
+每个版本 CI **总会**产出两种语言（有手写用用手写，缺的一侧从 git 自动生成）。
 
-### 手写说明（推荐）
-
-```text
-docs/release-notes/vX.Y.Z-en.md   # 英文正文（Release 默认）
-docs/release-notes/vX.Y.Z-zh.md   # 中文全文（顶部入口）
+```bash
+./scripts/generate-release-notes.sh v0.1.2 --write-files   # 缺哪侧补哪侧草稿
+pnpm release:notes -- v0.1.2                               # 预览 → dist/RELEASE_NOTES*.md
 ```
 
 详见 [docs/release-notes/README.zh-CN.md](../release-notes/README.zh-CN.md)。
-
-### 自动生成
-
-若无 `vX.Y.Z-en.md`，则根据 `git log` **只生成英文**正文（提交说明保持 git 原文）。  
-若无 `vX.Y.Z-zh.md`，Release 页**不会**出现中文段落，也没有中文入口链接。
-
-```bash
-pnpm release:notes -- v0.1.2
-./scripts/generate-release-notes.sh v0.1.2 --write-zh-auto   # 起草中文文件（需提交后再打 tag）
-```
 
 ## 与 supermarkets 的对应
 

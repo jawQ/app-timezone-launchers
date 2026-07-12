@@ -87,36 +87,31 @@ Tags must look like `v1.2.3` (three numeric parts). The workflow matches `v*`.
 
 - `ZoneLaunch-<version>-macos.zip` — ad-hoc signed app + `README-FIRST.txt`
 - `SHA256SUMS`
-- **Release notes** — English body by default; optional top **[中文 →]** link to full Chinese notes
+- **Release notes (always both languages)**
+  - English: Release page body (`RELEASE_NOTES.md`)
+  - Chinese: full notes asset (`RELEASE_NOTES.zh-CN.md`) + top **[中文 →]** link
 - GitHub’s automatic source zip/tar (not the app)
 
 Builds are **not notarized**. End-user Gatekeeper steps: [Install from Releases](install-from-release.md).
 
-## Release notes (English default + Chinese entry)
+## Release notes (always EN + ZH, separate files)
 
-1. **English only** on the GitHub Release page (UI copy, download/install, section titles)  
-2. Top **[中文 →](…)** only when `docs/release-notes/vX.Y.Z-zh.md` exists — full Chinese lives there, not mixed into the body  
-3. **Commit subjects** are listed as written in git (may still be Chinese)  
-4. Meta: release date + commit/diff scale  
+| | English | Chinese |
+| --- | --- | --- |
+| Prose language | English only | Chinese only |
+| GitHub | **Default body** | **[中文 →]** → `RELEASE_NOTES.zh-CN.md` |
+| Optional curated | `docs/release-notes/vX.Y.Z-en.md` | `docs/release-notes/vX.Y.Z-zh.md` |
 
-CI runs `scripts/generate-release-notes.sh` and sets `body_path` on the Release.
+Commit subjects are **not** translated. Do not mix languages inside one notes file.
 
-### Curated notes (recommended)
+Every release **always** produces both files (curated if present, otherwise auto from git for that language).
 
-```text
-docs/release-notes/vX.Y.Z-en.md   # English body (GH Release default)
-docs/release-notes/vX.Y.Z-zh.md   # Full Chinese (entry link only)
+```bash
+./scripts/generate-release-notes.sh v0.1.2 --write-files   # draft both if missing
+pnpm release:notes -- v0.1.2                               # preview → dist/RELEASE_NOTES*.md
 ```
 
 See [docs/release-notes/README.md](../release-notes/README.md).
-
-### Auto notes
-
-If `vX.Y.Z-en.md` is missing, notes are built from `git log` in **English only**. No in-body Chinese section.
-```bash
-pnpm release:notes -- v0.1.2
-./scripts/generate-release-notes.sh v0.1.2 --write-zh-auto   # draft Chinese file
-```
 
 ## Relation to supermarkets
 

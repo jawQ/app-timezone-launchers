@@ -2,69 +2,39 @@
 
 [English](README.md)
 
-GitHub Release 页面**默认英文**，顶部提供 **中文入口**（结构参考 [cc-switch](https://github.com/farion1231/cc-switch/releases) 的多语言写法，本项目语言优先级为英文优先）。
+**每个版本都必须有两种语言。**
 
-1. **英文** = Release 正文默认语言  
-2. **[中文 →](…)** 链到完整中文说明  
-3. 章节：**Overview / 概览** → **Highlights / 重点** → 明细 → **Download / 下载安装**
+| | 英文 | 中文 |
+| --- | --- | --- |
+| 内容 | 只写英文说明 | 只写中文说明 |
+| GitHub Release 页 | **默认正文** | 顶部 **[中文 →]** 进入完整中文 |
+| 手写源文件 | `vX.Y.Z-en.md`（可选） | `vX.Y.Z-zh.md`（可选） |
+| CI 始终产出 | `RELEASE_NOTES.md`（正文） | `RELEASE_NOTES.zh-CN.md`（附件） |
 
-## 每个版本的文件
+提交说明（commit message）**不翻译**，保持 git 原文。
 
-| 文件 | 作用 |
-| --- | --- |
-| `vX.Y.Z-en.md` | 英文更新说明（**作为 Release 正文主体**） |
-| `vX.Y.Z-zh.md` | 中文全文（在 Release 页顶部入口链接） |
+**同一文件内不要中英夹带**（英文文件不要写中文段落，中文文件不要写英文段落）；仅 Release 页顶部保留语言入口链接。
 
-例如：`v0.1.2-en.md`、`v0.1.2-zh.md`
+## 文件
 
-## 英文模板（`vX.Y.Z-en.md`）
-
-**不要**写 `# ZoneLaunch vX.Y.Z` 标题和中文链接——生成脚本会自动加。
-
-```markdown
-> One-paragraph summary of this release.
-
----
-
-## Overview
-
-…
-
-## Highlights
-
-- **Item:** details
+```text
+docs/release-notes/v0.1.2-en.md   # 英文
+docs/release-notes/v0.1.2-zh.md   # 中文
 ```
 
-## 中文模板（`vX.Y.Z-zh.md`）
+发版时若缺某一侧，CI 会按该语言从 git **自动生成**。建议打 tag 前手写齐两种。
 
-完整中文页（可自带标题与下载说明）：
+## 起草双语文档
 
-```markdown
-# ZoneLaunch vX.Y.Z
-
-> 一句话摘要。
-
-**[English →](…/vX.Y.Z-en.md)**
-
----
-
-## 概览
-…
+```bash
+./scripts/generate-release-notes.sh v0.1.2 --write-files
+# 编辑 docs/release-notes/v0.1.2-en.md 与 v0.1.2-zh.md
+# 提交、push master，再 pnpm release:tag
 ```
 
-## 流程
-
-1. 编写 `docs/release-notes/vX.Y.Z-en.md`（建议同时写 `-zh.md`）。  
-2. 提交并 `git push origin master`。  
-3. `pnpm release:tag` / `npm run release:tag`。  
-4. CI 生成 **英文正文 + 中文入口**。
-
-### 自动模式
-
-若无 `vX.Y.Z-en.md`，Release 正文为 **纯英文**（由 git 生成 overview / highlights / commits）。  
-提交说明不翻译。中文**只**在存在 `vX.Y.Z-zh.md` 时通过顶部 **[中文 →]** 入口查看，正文内不再夹带中文段落。
+## 预览英文 Release 正文
 
 ```bash
 pnpm release:notes -- v0.1.2
-./scripts/generate-release-notes.sh v0.1.2 --write-zh-auto   # 起草中文文件；打 tag 前需提交入库
+# 生成 dist/RELEASE_NOTES.md + dist/RELEASE_NOTES.zh-CN.md
 ```

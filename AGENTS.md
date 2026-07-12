@@ -47,8 +47,8 @@ npm run release:tag:test              # self-test
 | `release:notes -- vX.Y.Z` | Preview bilingual release notes |
 
 Underlying scripts: `./scripts/release-tag.sh`, `./scripts/generate-release-notes.sh`.  
-Optional curated notes: `docs/release-notes/vX.Y.Z-en.md` (GH default) + `vX.Y.Z-zh.md` (中文入口)
-(see `docs/release-notes/README.md`). CI publishes **English-first** release notes with a Chinese entry link.
+Every release has **both** languages (separate files, no mixed prose): `docs/release-notes/vX.Y.Z-en.md`
++ `vX.Y.Z-zh.md` (or auto-generated). GH body is English; Chinese is `RELEASE_NOTES.zh-CN.md` + **[中文 →]** link.
 
 **VS Code / Cursor:** `.vscode/tasks.json` — Command Palette → **Tasks: Run Task** → **`release:tag`**.
 ## App identity
