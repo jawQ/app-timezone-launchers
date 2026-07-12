@@ -76,9 +76,10 @@ Full Chinese page (may include its own title and download section):
 
 ### Auto mode
 
-If `vX.Y.Z-en.md` is missing, notes are generated from git (English overview / highlights / commits; Chinese subsection embedded if no `-zh.md`).
+If `vX.Y.Z-en.md` is missing, the Release body is **English-only** from git (overview / highlights / commits).  
+Commit subjects are not rewritten. Chinese appears **only** via **[中文 →]** when `vX.Y.Z-zh.md` exists in the repo at that tag.
 
 ```bash
 pnpm release:notes -- v0.1.2
-./scripts/generate-release-notes.sh v0.1.2 --write-zh-auto   # draft Chinese file from git
+./scripts/generate-release-notes.sh v0.1.2 --write-zh-auto   # draft Chinese file; commit before tagging
 ```

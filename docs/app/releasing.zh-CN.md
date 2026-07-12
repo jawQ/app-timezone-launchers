@@ -114,11 +114,12 @@ docs/release-notes/vX.Y.Z-zh.md   # 中文全文（顶部入口）
 
 ### 自动生成
 
-若无 `vX.Y.Z-en.md`，则根据 `git log` 自动生成英文说明；无 `-zh.md` 时会在正文内嵌简短中文小节。
+若无 `vX.Y.Z-en.md`，则根据 `git log` **只生成英文**正文（提交说明保持 git 原文）。  
+若无 `vX.Y.Z-zh.md`，Release 页**不会**出现中文段落，也没有中文入口链接。
 
 ```bash
 pnpm release:notes -- v0.1.2
-./scripts/generate-release-notes.sh v0.1.2 --write-zh-auto   # 起草中文文件
+./scripts/generate-release-notes.sh v0.1.2 --write-zh-auto   # 起草中文文件（需提交后再打 tag）
 ```
 
 ## 与 supermarkets 的对应

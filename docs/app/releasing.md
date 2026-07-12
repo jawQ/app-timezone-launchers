@@ -87,18 +87,16 @@ Tags must look like `v1.2.3` (three numeric parts). The workflow matches `v*`.
 
 - `ZoneLaunch-<version>-macos.zip` — ad-hoc signed app + `README-FIRST.txt`
 - `SHA256SUMS`
-- **Bilingual release notes** (English + 中文) on the GitHub Release page
+- **Release notes** — English body by default; optional top **[中文 →]** link to full Chinese notes
 - GitHub’s automatic source zip/tar (not the app)
 
 Builds are **not notarized**. End-user Gatekeeper steps: [Install from Releases](install-from-release.md).
 
 ## Release notes (English default + Chinese entry)
 
-Structured multi-language notes (layout idea from [cc-switch](https://github.com/farion1231/cc-switch/releases)), with **English as the default**:
-
-1. **English first** on the GitHub Release page  
-2. Top link **[中文 →](…)** to full Chinese notes  
-3. Sections: **Overview** / **Highlights** / details → **Download & install**  
+1. **English only** on the GitHub Release page (UI copy, download/install, section titles)  
+2. Top **[中文 →](…)** only when `docs/release-notes/vX.Y.Z-zh.md` exists — full Chinese lives there, not mixed into the body  
+3. **Commit subjects** are listed as written in git (may still be Chinese)  
 4. Meta: release date + commit/diff scale  
 
 CI runs `scripts/generate-release-notes.sh` and sets `body_path` on the Release.
@@ -107,15 +105,14 @@ CI runs `scripts/generate-release-notes.sh` and sets `body_path` on the Release.
 
 ```text
 docs/release-notes/vX.Y.Z-en.md   # English body (GH Release default)
-docs/release-notes/vX.Y.Z-zh.md   # Chinese full text (entry link)
+docs/release-notes/vX.Y.Z-zh.md   # Full Chinese (entry link only)
 ```
 
 See [docs/release-notes/README.md](../release-notes/README.md).
 
 ### Auto notes
 
-If `vX.Y.Z-en.md` is missing, notes are built from `git log` (English overview / highlights / commits; short 中文 block if no `-zh.md`).
-
+If `vX.Y.Z-en.md` is missing, notes are built from `git log` in **English only**. No in-body Chinese section.
 ```bash
 pnpm release:notes -- v0.1.2
 ./scripts/generate-release-notes.sh v0.1.2 --write-zh-auto   # draft Chinese file

@@ -14,8 +14,9 @@
 #   vX.Y.Z-en.md   English body (**preferred** for GH Release description)
 #   vX.Y.Z-zh.md   Chinese full notes (linked from the Release page)
 #
-# If curated EN is missing, notes are auto-built from git history
-# (English layout; Chinese section in-body if no -zh.md, else link only).
+# If curated EN is missing, notes are auto-built from git history (English only).
+# Chinese never appears in the Release body except the optional **[中文 →]** entry link
+# (and raw commit subjects, which are left as written in git).
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -35,8 +36,9 @@ Usage:
   ./scripts/generate-release-notes.sh vX.Y.Z [--output PATH] [--print]
   ./scripts/generate-release-notes.sh vX.Y.Z --write-zh-auto
 
-English is the default Release body language; Chinese is a top entry link
-(or an in-body 中文 section when no curated zh file exists).
+English is the default Release body (all UI copy in English).
+Chinese is only a top entry link to docs/release-notes/vX.Y.Z-zh.md when that file exists.
+Commit subjects are listed as recorded in git (may be Chinese or English).
 EOF
 }
 
@@ -163,6 +165,8 @@ cd app-timezone-launchers
 EOF
 }
 
+# Only emit a Chinese entry when a full Chinese notes file is in the tree.
+# Never embed Chinese prose in the default Release body.
 zh_entry_link() {
   local tag="$1"
   local slug
@@ -170,9 +174,6 @@ zh_entry_link() {
   if [[ -f "$NOTES_DIR/${tag}-zh.md" ]]; then
     printf '**[中文 →](https://github.com/%s/blob/%s/docs/release-notes/%s-zh.md)**\n' \
       "$slug" "$tag" "$tag"
-  else
-    printf '**中文：** see the *中文* section below when present, or open install docs in [Simplified Chinese](https://github.com/%s/blob/master/docs/app/install-from-release.zh-CN.md).\n' \
-      "$slug"
   fi
 }
 
@@ -203,13 +204,13 @@ build_auto_en() {
 
   local prev_label="${prev:-the initial commit}"
 
-  cat <<EOF
-# ZoneLaunch ${tag}
-
-> ZoneLaunch **${version}** updates since **${prev_label}**. See **Highlights** and **Commits** below.
-
-$(zh_entry_link "$tag")
-
+  {
+    printf '# ZoneLaunch %s\n\n' "$tag"
+    printf '> ZoneLaunch **%s** updates since **%s**. See **Highlights** and **Commits** below.\n\n' \
+      "$version" "$prev_label"
+    zh_entry_link "$tag"
+    [[ -f "$NOTES_DIR/${tag}-zh.md" ]] && printf '\n'
+    cat <<EOF
 ---
 
 ## Overview
@@ -231,31 +232,11 @@ ${highlights}
 ## Commits
 
 ${bullets}
+
+_Commit subjects are shown as recorded in git (may be Chinese or English)._
 EOF
-
-  # If no curated Chinese file, embed a short 中文 section so CN users still see content on the Release page.
-  if [[ ! -f "$NOTES_DIR/${tag}-zh.md" ]]; then
-    cat <<EOF
-
----
-
-## 中文
-
-### 概览
-
-ZoneLaunch ${tag} 相对 ${prev_label} 的更新。下列条目来自 git 提交说明原文。
-
-**发布日期**：${date}
-
-**更新规模**：${commits} commits | ${files_stat}
-
-### 提交列表
-
-${bullets}
-EOF
-  fi
-
-  download_footer_en "$version"
+    download_footer_en "$version"
+  }
 }
 
 build_from_curated_en() {
@@ -271,12 +252,12 @@ build_from_curated_en() {
   [[ -n "$files_stat" ]] || files_stat="n/a"
   en_body="$(strip_leading_title "$en_path")"
 
-  cat <<EOF
-# ZoneLaunch ${tag}
-
-$(zh_entry_link "$tag")
-
-${en_body}
+  {
+    printf '# ZoneLaunch %s\n\n' "$tag"
+    zh_entry_link "$tag"
+    [[ -f "$NOTES_DIR/${tag}-zh.md" ]] && printf '\n'
+    printf '%s\n' "$en_body"
+    cat <<EOF
 
 ---
 
@@ -284,7 +265,8 @@ ${en_body}
 
 **Scale:** ${commits} commits | ${files_stat}${prev:+ | since ${prev}}
 EOF
-  download_footer_en "$version"
+    download_footer_en "$version"
+  }
 }
 
 # Draft Chinese file from git for maintainers.
