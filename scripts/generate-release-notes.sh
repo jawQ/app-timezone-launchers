@@ -1,19 +1,21 @@
 #!/usr/bin/env bash
-# Build GitHub Release notes in the style of cc-switch:
-#   - Chinese is the default language on the Release page
-#   - English is a separate file with a top-of-page link
-#   - Sections: 概览 / 重点内容 / 更新明细 + download footer
+# Build GitHub Release notes (English default + Chinese entry).
+#
+# Layout (inspired by structured multi-language notes, e.g. cc-switch):
+#   - English is the default language on the Release page
+#   - Chinese is linked at the top: **[中文 →](.../vX.Y.Z-zh.md)**
+#   - Sections: Overview / Highlights / details + download footer
 #
 # Usage:
 #   ./scripts/generate-release-notes.sh v0.1.2
 #   ./scripts/generate-release-notes.sh v0.1.2 --output dist/RELEASE_NOTES.md
 #
 # Curated sources (optional, under docs/release-notes/):
-#   vX.Y.Z-zh.md   Chinese body (preferred for GH Release description)
-#   vX.Y.Z-en.md   English full notes (linked from the Release page)
+#   vX.Y.Z-en.md   English body (**preferred** for GH Release description)
+#   vX.Y.Z-zh.md   Chinese full notes (linked from the Release page)
 #
-# If curated files are missing, notes are auto-built from git history
-# (Chinese layout + English section in the same body so no missing blob links).
+# If curated EN is missing, notes are auto-built from git history
+# (English layout; Chinese section in-body if no -zh.md, else link only).
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -31,9 +33,10 @@ usage() {
   cat <<'EOF'
 Usage:
   ./scripts/generate-release-notes.sh vX.Y.Z [--output PATH] [--print]
+  ./scripts/generate-release-notes.sh vX.Y.Z --write-zh-auto
 
-Style follows https://github.com/farion1231/cc-switch/releases
-(Chinese-first Release body + link to English notes).
+English is the default Release body language; Chinese is a top entry link
+(or an in-body 中文 section when no curated zh file exists).
 EOF
 }
 
@@ -47,7 +50,7 @@ normalize_tag() {
 }
 
 repo_slug() {
-  local remote owner repo
+  local remote
   remote="$(git remote get-url origin 2>/dev/null || true)"
   if [[ "$remote" =~ github\.com[:/]([^/]+)/([^/.]+) ]]; then
     printf '%s/%s\n' "${BASH_REMATCH[1]}" "${BASH_REMATCH[2]%.git}"
@@ -101,7 +104,6 @@ commit_count() {
 }
 
 diff_stat_line() {
-  # e.g. "12 files changed, 340 insertions(+), 20 deletions(-)"
   git diff --shortstat "$1" 2>/dev/null | sed 's/^ *//' || true
 }
 
@@ -110,14 +112,13 @@ commit_bullets() {
   local log
   log="$(git log --pretty=format:'- %s' --no-merges "$range" 2>/dev/null || true)"
   if [[ -z "$log" ]]; then
-    printf '%s\n' "- （本区间无非 merge 提交）"
+    printf '%s\n' "- (no non-merge commits in this range)"
     return
   fi
   printf '%s\n' "$log"
 }
 
 highlight_bullets() {
-  # First up to 8 commit subjects as "重点内容"
   local range="$1"
   git log --pretty=format:'- %s' --no-merges "$range" 2>/dev/null | head -8 || true
 }
@@ -129,37 +130,6 @@ release_date() {
   else
     date +%F
   fi
-}
-
-download_footer_zh() {
-  local version="$1"
-  cat <<EOF
-
----
-
-## 下载与安装
-
-**资源**
-
-- \`ZoneLaunch-${version}-macos.zip\` — \`ZoneLaunch.app\` + \`README-FIRST.txt\`（ad-hoc 签名，**未公证**）
-- \`SHA256SUMS\` — 校验和
-
-**安装步骤**
-
-1. 解压后将 **ZoneLaunch.app** 拖到「应用程序」。
-2. 首次打开常被门禁拦截：点 **Done / 完成**，再到 **系统设置 → 隐私与安全性 → Open Anyway / 仍要打开**。
-3. 图文说明：[从 Release 安装](https://github.com/$(repo_slug)/blob/master/docs/app/install-from-release.zh-CN.md)
-
-**更轻量：Shell 启动命令**
-
-\`\`\`bash
-git clone https://github.com/$(repo_slug).git
-cd app-timezone-launchers
-./install.sh --feishu --wechat
-\`\`\`
-
-**应用身份：** Bundle ID \`app.zonelaunch.launcher\`
-EOF
 }
 
 download_footer_en() {
@@ -193,7 +163,31 @@ cd app-timezone-launchers
 EOF
 }
 
-build_auto_zh() {
+zh_entry_link() {
+  local tag="$1"
+  local slug
+  slug="$(repo_slug)"
+  if [[ -f "$NOTES_DIR/${tag}-zh.md" ]]; then
+    printf '**[中文 →](https://github.com/%s/blob/%s/docs/release-notes/%s-zh.md)**\n' \
+      "$slug" "$tag" "$tag"
+  else
+    printf '**中文：** see the *中文* section below when present, or open install docs in [Simplified Chinese](https://github.com/%s/blob/master/docs/app/install-from-release.zh-CN.md).\n' \
+      "$slug"
+  fi
+}
+
+# Strip a leading "# ZoneLaunch ..." title from curated files (generator adds it).
+strip_leading_title() {
+  local file="$1"
+  awk '
+    BEGIN { skip=1 }
+    skip && /^# ZoneLaunch/ { next }
+    skip && /^[[:space:]]*$/ { next }
+    { skip=0; print }
+  ' "$file"
+}
+
+build_auto_en() {
   local tag="$1"
   local version="${tag#v}"
   local prev range commits files_stat date highlights bullets
@@ -204,131 +198,23 @@ build_auto_zh() {
   date="$(release_date "$tag")"
   highlights="$(highlight_bullets "$range")"
   bullets="$(commit_bullets "$range")"
-  [[ -n "$highlights" ]] || highlights="- （无）"
-  [[ -n "$files_stat" ]] || files_stat="（无 diff 统计）"
-
-  local prev_label="${prev:-初始提交}"
-  local en_link=""
-  if [[ -f "$NOTES_DIR/${tag}-en.md" ]]; then
-    en_link="**[English →](https://github.com/$(repo_slug)/blob/${tag}/docs/release-notes/${tag}-en.md)**"
-  else
-    en_link="**English summary:** see the auto-generated English section below / 英文摘要见下方 *English* 小节。"
-  fi
-
-  cat <<EOF
-# ZoneLaunch ${tag}
-
-> ZoneLaunch **${version}** 相对 **${prev_label}** 的更新：脚本与 ZoneLaunch App 的文档、发版与安装体验改进。完整条目见下方「提交列表」。
-
-${en_link}
-
----
-
-## 概览
-
-ZoneLaunch ${tag} 是 ${prev_label} 之后的一版更新，聚焦维护者发版体验、Release 说明与用户安装文档。
-
-**发布日期**：${date}
-
-**更新规模**：${commits} commits | ${files_stat}
-
----
-
-## 重点内容
-
-${highlights}
-
----
-
-## 提交列表
-
-${bullets}
-
----
-
-## English (auto)
-
-### Overview
-
-ZoneLaunch ${tag} ships updates since ${prev_label}. Commit subjects below are as recorded in git.
-
-**Release date:** ${date}
-
-**Scale:** ${commits} commits | ${files_stat}
-
-### Commits
-
-${bullets}
-EOF
-  download_footer_zh "$version"
-}
-
-build_from_curated() {
-  local tag="$1"
-  local version="${tag#v}"
-  local zh_path="$NOTES_DIR/${tag}-zh.md"
-  local en_path="$NOTES_DIR/${tag}-en.md"
-  local slug date prev range commits files_stat
-  slug="$(repo_slug)"
-  date="$(release_date "$tag")"
-  prev="$(previous_tag "$tag")"
-  range="$(resolve_range "$tag")"
-  commits="$(commit_count "$range")"
-  files_stat="$(diff_stat_line "$range")"
-  [[ -n "$files_stat" ]] || files_stat="n/a"
-
-  local en_link
-  if [[ -f "$en_path" ]]; then
-    en_link="**[English →](https://github.com/${slug}/blob/${tag}/docs/release-notes/${tag}-en.md)**"
-  else
-    en_link=""
-  fi
-
-  # Chinese-first body (cc-switch style): title → language link → curated zh → meta → download.
-  local zh_body
-  zh_body="$(cat "$zh_path")"
-
-  cat <<EOF
-# ZoneLaunch ${tag}
-
-${en_link}
-
-${zh_body}
-
----
-
-**发布日期**：${date}
-
-**更新规模**：${commits} commits | ${files_stat}${prev:+ | since ${prev}}
-EOF
-  download_footer_zh "$version"
-}
-
-# Optional: materialize English file content for maintainers when using --write-en-auto
-build_auto_en_file() {
-  local tag="$1"
-  local version="${tag#v}"
-  local prev range commits files_stat date bullets
-  prev="$(previous_tag "$tag")"
-  range="$(resolve_range "$tag")"
-  commits="$(commit_count "$range")"
-  files_stat="$(diff_stat_line "$range")"
-  date="$(release_date "$tag")"
-  bullets="$(commit_bullets "$range")"
+  [[ -n "$highlights" ]] || highlights="- (none)"
   [[ -n "$files_stat" ]] || files_stat="(no diff stat)"
 
+  local prev_label="${prev:-the initial commit}"
+
   cat <<EOF
 # ZoneLaunch ${tag}
 
-> Updates since **${prev:-the initial commit}**.
+> ZoneLaunch **${version}** updates since **${prev_label}**. See **Highlights** and **Commits** below.
 
-**[中文 →](https://github.com/$(repo_slug)/blob/${tag}/docs/release-notes/${tag}-zh.md)**
+$(zh_entry_link "$tag")
 
 ---
 
 ## Overview
 
-ZoneLaunch ${version} is a maintenance release focused on documentation, release automation, and install guidance.
+ZoneLaunch ${tag} is a release after ${prev_label}, covering documentation, packaging, and install guidance for shell launchers and the ZoneLaunch app.
 
 **Release date:** ${date}
 
@@ -338,7 +224,7 @@ ZoneLaunch ${version} is a maintenance release focused on documentation, release
 
 ## Highlights
 
-$(highlight_bullets "$range")
+${highlights}
 
 ---
 
@@ -346,22 +232,116 @@ $(highlight_bullets "$range")
 
 ${bullets}
 EOF
+
+  # If no curated Chinese file, embed a short 中文 section so CN users still see content on the Release page.
+  if [[ ! -f "$NOTES_DIR/${tag}-zh.md" ]]; then
+    cat <<EOF
+
+---
+
+## 中文
+
+### 概览
+
+ZoneLaunch ${tag} 相对 ${prev_label} 的更新。下列条目来自 git 提交说明原文。
+
+**发布日期**：${date}
+
+**更新规模**：${commits} commits | ${files_stat}
+
+### 提交列表
+
+${bullets}
+EOF
+  fi
+
   download_footer_en "$version"
+}
+
+build_from_curated_en() {
+  local tag="$1"
+  local version="${tag#v}"
+  local en_path="$NOTES_DIR/${tag}-en.md"
+  local date prev range commits files_stat en_body
+  date="$(release_date "$tag")"
+  prev="$(previous_tag "$tag")"
+  range="$(resolve_range "$tag")"
+  commits="$(commit_count "$range")"
+  files_stat="$(diff_stat_line "$range")"
+  [[ -n "$files_stat" ]] || files_stat="n/a"
+  en_body="$(strip_leading_title "$en_path")"
+
+  cat <<EOF
+# ZoneLaunch ${tag}
+
+$(zh_entry_link "$tag")
+
+${en_body}
+
+---
+
+**Release date:** ${date}
+
+**Scale:** ${commits} commits | ${files_stat}${prev:+ | since ${prev}}
+EOF
+  download_footer_en "$version"
+}
+
+# Draft Chinese file from git for maintainers.
+build_auto_zh_file() {
+  local tag="$1"
+  local version="${tag#v}"
+  local prev range commits files_stat date bullets
+  prev="$(previous_tag "$tag")"
+  range="$(resolve_range "$tag")"
+  commits="$(commit_count "$range")"
+  files_stat="$(diff_stat_line "$range")"
+  date="$(release_date "$tag")"
+  bullets="$(commit_bullets "$range")"
+  [[ -n "$files_stat" ]] || files_stat="（无 diff 统计）"
+
+  cat <<EOF
+> ZoneLaunch **${version}** 相对 **${prev:-初始提交}** 的更新。
+
+**[English →](https://github.com/$(repo_slug)/blob/${tag}/docs/release-notes/${tag}-en.md)**
+
+---
+
+## 概览
+
+ZoneLaunch ${tag} 是 ${prev:-初始提交} 之后的一版更新。
+
+**发布日期**：${date}
+
+**更新规模**：${commits} commits | ${files_stat}
+
+---
+
+## 重点内容
+
+$(highlight_bullets "$range")
+
+---
+
+## 提交列表
+
+${bullets}
+EOF
 }
 
 generate() {
   local tag="$1"
-  local zh_path="$NOTES_DIR/${tag}-zh.md"
+  local en_path="$NOTES_DIR/${tag}-en.md"
 
-  if [[ -f "$zh_path" ]]; then
-    build_from_curated "$tag"
+  if [[ -f "$en_path" ]]; then
+    build_from_curated_en "$tag"
   else
-    build_auto_zh "$tag"
+    build_auto_en "$tag"
   fi
 }
 
 main() {
-  local tag="" output="" do_print=0 write_en_auto=0
+  local tag="" output="" do_print=0 write_zh_auto=0
   while [[ $# -gt 0 ]]; do
     case "$1" in
       -h | --help)
@@ -377,9 +357,8 @@ main() {
         do_print=1
         shift
         ;;
-      --write-en-auto)
-        # Write docs/release-notes/vX.Y.Z-en.md from git (for maintainers)
-        write_en_auto=1
+      --write-zh-auto)
+        write_zh_auto=1
         shift
         ;;
       -*)
@@ -397,11 +376,11 @@ main() {
   command -v git >/dev/null 2>&1 || die "missing git"
   tag="$(normalize_tag "$tag")"
 
-  if (( write_en_auto )); then
+  if (( write_zh_auto )); then
     mkdir -p "$NOTES_DIR"
-    local en_out="$NOTES_DIR/${tag}-en.md"
-    build_auto_en_file "$tag" >"$en_out"
-    echo "Wrote $en_out" >&2
+    local zh_out="$NOTES_DIR/${tag}-zh.md"
+    build_auto_zh_file "$tag" >"$zh_out"
+    echo "Wrote $zh_out" >&2
   fi
 
   local notes

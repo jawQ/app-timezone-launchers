@@ -81,34 +81,35 @@ Tags must look like `v1.2.3` (three numeric parts). The workflow matches `v*`.
 
 Builds are **not notarized**. End-user Gatekeeper steps: [Install from Releases](install-from-release.md).
 
-## Release notes (cc-switch style)
+## Release notes (English default + Chinese entry)
 
-Layout is aligned with [cc-switch releases](https://github.com/farion1231/cc-switch/releases):
+Structured multi-language notes (layout idea from [cc-switch](https://github.com/farion1231/cc-switch/releases)), with **English as the default**:
 
-1. **Chinese first** on the GitHub Release page  
-2. Top link **[English →](…)** to a full English file  
-3. Sections such as **概览** / **重点内容** / details, then **下载与安装**  
-4. Meta line: release date + commit/diff scale  
+1. **English first** on the GitHub Release page  
+2. Top link **[中文 →](…)** to full Chinese notes  
+3. Sections: **Overview** / **Highlights** / details → **Download & install**  
+4. Meta: release date + commit/diff scale  
 
 CI runs `scripts/generate-release-notes.sh` and sets `body_path` on the Release.
 
 ### Curated notes (recommended)
 
 ```text
-docs/release-notes/vX.Y.Z-zh.md   # Chinese body (GH Release default)
-docs/release-notes/vX.Y.Z-en.md   # English full text (linked)
+docs/release-notes/vX.Y.Z-en.md   # English body (GH Release default)
+docs/release-notes/vX.Y.Z-zh.md   # Chinese full text (entry link)
 ```
 
 See [docs/release-notes/README.md](../release-notes/README.md).
 
 ### Auto notes
 
-If `vX.Y.Z-zh.md` is missing, notes are built from `git log` (概览 + 重点内容 + 提交列表 + English auto section).
+If `vX.Y.Z-en.md` is missing, notes are built from `git log` (English overview / highlights / commits; short 中文 block if no `-zh.md`).
 
 ```bash
 pnpm release:notes -- v0.1.2
-./scripts/generate-release-notes.sh v0.1.2 --write-en-auto   # draft EN file
+./scripts/generate-release-notes.sh v0.1.2 --write-zh-auto   # draft Chinese file
 ```
+
 ## Relation to supermarkets
 
 Same idea as `pnpm miniapp:tag` there: a local script creates and pushes a version tag; CI does the heavy build/upload.

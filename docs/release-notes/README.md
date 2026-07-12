@@ -1,59 +1,28 @@
-# Release notes (cc-switch style)
+# Release notes
 
 [简体中文](README.zh-CN.md)
 
-Release notes follow the layout used by [cc-switch releases](https://github.com/farion1231/cc-switch/releases):
+GitHub Release pages use **English by default**, with a top **Chinese entry** link (same multi-language idea as structured notes on [cc-switch](https://github.com/farion1231/cc-switch/releases), language priority flipped for this project).
 
-1. **Chinese is the default language** on the GitHub Release page  
-2. **English** is a separate file linked at the top: `**[English →](...)**`  
-3. Structured sections: **概览** → **重点内容** → details → **下载与安装**
+1. **English** = default body on the Release page  
+2. **[中文 →](…)** links to full Chinese notes  
+3. Sections: **Overview** → **Highlights** → details → **Download & install**
 
 ## Files per version
 
 | File | Role |
 | --- | --- |
-| `vX.Y.Z-zh.md` | Chinese changelog (**preferred** for GH Release body) |
-| `vX.Y.Z-en.md` | Full English notes (linked from the Release page) |
+| `vX.Y.Z-en.md` | English changelog (**preferred** for GH Release body) |
+| `vX.Y.Z-zh.md` | Full Chinese notes (linked from the Release page) |
 
-Example: `v0.1.2-zh.md`, `v0.1.2-en.md`
+Example: `v0.1.2-en.md`, `v0.1.2-zh.md`
 
-## Suggested Chinese template (`vX.Y.Z-zh.md`)
+## English template (`vX.Y.Z-en.md`)
 
-Do **not** put the `# ZoneLaunch vX.Y.Z` title or download footer here — the generator adds those.
-
-```markdown
-> 一句话总结本版最重要的变化（blockquote，像 cc-switch 一样放在标题下）。
-
----
-
-## 概览
-
-用 1～3 段说明本版定位、相对上一版的重点。
-
----
-
-## 重点内容
-
-- **亮点一**：说明
-- **亮点二**：说明
-
----
-
-## 新功能 / 变更 / 修复
-
-### 小节标题
-
-详细说明……
-```
-
-## Suggested English template (`vX.Y.Z-en.md`)
+Do **not** put the `# ZoneLaunch vX.Y.Z` title or the Chinese link — the generator adds those.
 
 ```markdown
-# ZoneLaunch vX.Y.Z
-
-> One-paragraph summary.
-
-**[中文 →](https://github.com/jawQ/app-timezone-launchers/blob/vX.Y.Z/docs/release-notes/vX.Y.Z-zh.md)**
+> One-paragraph summary of this release.
 
 ---
 
@@ -63,27 +32,53 @@ Do **not** put the `# ZoneLaunch vX.Y.Z` title or download footer here — the g
 
 ## Highlights
 
-- …
+- **Item:** details
 
-## Details
+## Changes
+
+### Subsection
 
 …
 ```
 
-English files may include their own download section, or rely on the Chinese Release page footer.
+## Chinese template (`vX.Y.Z-zh.md`)
+
+Full Chinese page (may include its own title and download section):
+
+```markdown
+# ZoneLaunch vX.Y.Z
+
+> 一句话摘要。
+
+**[English →](https://github.com/jawQ/app-timezone-launchers/blob/vX.Y.Z/docs/release-notes/vX.Y.Z-en.md)**
+
+---
+
+## 概览
+
+…
+
+## 重点内容
+
+- …
+
+## 下载与安装
+
+…
+```
 
 ## Workflow
 
-1. Write `docs/release-notes/vX.Y.Z-zh.md` (+ optional `-en.md`).  
+1. Write `docs/release-notes/vX.Y.Z-en.md` (+ recommended `-zh.md`).  
 2. Commit and push to `master`.  
 3. `pnpm release:tag` / `npm run release:tag`.  
-4. CI runs `scripts/generate-release-notes.sh` and publishes the body.
+4. CI runs `scripts/generate-release-notes.sh` and publishes the English body with a Chinese link.
 
 ### Auto mode
 
-If `vX.Y.Z-zh.md` is missing, notes are generated from git (`概览` + `重点内容` + `提交列表` + English auto section).
+If `vX.Y.Z-en.md` is missing, notes are generated from git (English overview / highlights / commits; Chinese subsection embedded if no `-zh.md`).
 
 ```bash
 pnpm release:notes -- v0.1.2
-./scripts/generate-release-notes.sh v0.1.2 --write-en-auto   # draft EN file from git
+./scripts/generate-release-notes.sh v0.1.2 --write-zh-auto   # draft Chinese file from git
 ```

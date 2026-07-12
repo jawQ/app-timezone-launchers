@@ -81,13 +81,13 @@ tag 必须是 `v1.2.3` 这种三段数字。workflow 匹配 `v*`。
 
 构建**未公证**。终端用户门禁步骤见：[从 Release 安装](install-from-release.zh-CN.md)。
 
-## 更新日志（对齐 cc-switch）
+## 更新日志（默认英文 + 中文入口）
 
-风格参考 [cc-switch Releases](https://github.com/farion1231/cc-switch/releases)：
+结构参考 [cc-switch](https://github.com/farion1231/cc-switch/releases) 的多语言写法，本项目**默认英文**：
 
-1. **GitHub Release 默认中文**  
-2. 顶部 **[English →](…)** 链到英文全文  
-3. 章节：**概览** / **重点内容** / 明细 → **下载与安装**  
+1. **GitHub Release 默认英文**  
+2. 顶部 **[中文 →](…)** 进入完整中文说明  
+3. 章节：**Overview / Highlights** → 明细 → **Download & install**  
 4. 附带：发布日期、commit / diff 规模  
 
 CI 运行 `scripts/generate-release-notes.sh`，通过 `body_path` 写入 Release 描述。
@@ -95,20 +95,21 @@ CI 运行 `scripts/generate-release-notes.sh`，通过 `body_path` 写入 Releas
 ### 手写说明（推荐）
 
 ```text
-docs/release-notes/vX.Y.Z-zh.md   # 中文正文（Release 默认）
-docs/release-notes/vX.Y.Z-en.md   # 英文全文（顶部链接）
+docs/release-notes/vX.Y.Z-en.md   # 英文正文（Release 默认）
+docs/release-notes/vX.Y.Z-zh.md   # 中文全文（顶部入口）
 ```
 
 详见 [docs/release-notes/README.zh-CN.md](../release-notes/README.zh-CN.md)。
 
 ### 自动生成
 
-若无 `vX.Y.Z-zh.md`，则根据 `git log` 自动生成（概览 + 重点 + 提交列表 + 英文小节）。
+若无 `vX.Y.Z-en.md`，则根据 `git log` 自动生成英文说明；无 `-zh.md` 时会在正文内嵌简短中文小节。
 
 ```bash
 pnpm release:notes -- v0.1.2
-./scripts/generate-release-notes.sh v0.1.2 --write-en-auto   # 起草英文文件
+./scripts/generate-release-notes.sh v0.1.2 --write-zh-auto   # 起草中文文件
 ```
+
 ## 与 supermarkets 的对应
 
 与那边 `pnpm miniapp:tag` 同思路：本地脚本创建并推送版本 tag，由 CI 负责构建与上传。
