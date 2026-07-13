@@ -1,6 +1,7 @@
 import AppKit
 import AppTimezoneLauncherCore
 import Foundation
+import UniformTypeIdentifiers
 
 @MainActor
 final class LauncherViewModel: ObservableObject {
@@ -115,6 +116,42 @@ final class LauncherViewModel: ObservableObject {
     } catch {
       alertMessage = error.localizedDescription
     }
+  }
+
+  /// Opens a file picker starting at `/Applications` so users can choose `.app`
+  /// bundles without knowing how to drag from Finder.
+  func presentAppPicker() {
+    guard selectedGroup != nil else { return }
+
+    let panel = Self.makeAppOpenPanel()
+    let finish: (NSApplication.ModalResponse) -> Void = { [weak self] response in
+      guard response == .OK, let self else { return }
+      for url in panel.urls {
+        self.addApp(from: url)
+      }
+    }
+
+    if let window = NSApp.keyWindow ?? NSApp.mainWindow ?? NSApp.windows.first {
+      panel.beginSheetModal(for: window, completionHandler: finish)
+    } else {
+      finish(panel.runModal())
+    }
+  }
+
+  /// Shared panel setup for the app chooser (starts in `/Applications`).
+  static func makeAppOpenPanel() -> NSOpenPanel {
+    let panel = NSOpenPanel()
+    panel.canChooseFiles = true
+    panel.canChooseDirectories = false
+    panel.allowsMultipleSelection = true
+    panel.canCreateDirectories = false
+    panel.treatsFilePackagesAsDirectories = false
+    panel.allowedContentTypes = [.application]
+    panel.directoryURL = URL(fileURLWithPath: "/Applications", isDirectory: true)
+    panel.title = "Choose Apps"
+    panel.message = "Select apps to launch with the current time zone."
+    panel.prompt = "Add"
+    return panel
   }
 
   func launch(entry: LauncherEntry, app: ManagedApp) {

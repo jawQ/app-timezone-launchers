@@ -332,49 +332,71 @@ private struct HeaderView: View {
 private struct DropZoneView: View {
   @ObservedObject var model: LauncherViewModel
   @State private var isTargeted = false
+  @State private var isHovered = false
+
+  private var isHighlighted: Bool { isTargeted || isHovered }
 
   var body: some View {
-    VStack(spacing: 20) {
-      ZStack {
-        RoundedRectangle(cornerRadius: 28, style: .continuous)
-          .fill(isTargeted ? ZoneTheme.accentSoftStrong : ZoneTheme.accentSoft.opacity(0.45))
-          .frame(width: 168, height: 168)
+    Button {
+      model.presentAppPicker()
+    } label: {
+      VStack(spacing: 20) {
+        ZStack {
+          RoundedRectangle(cornerRadius: 28, style: .continuous)
+            .fill(
+              isHighlighted ? ZoneTheme.accentSoftStrong : ZoneTheme.accentSoft.opacity(0.45)
+            )
+            .frame(width: 168, height: 168)
 
-        RoundedRectangle(cornerRadius: 28, style: .continuous)
-          .strokeBorder(
-            isTargeted ? ZoneTheme.accent : ZoneTheme.accent.opacity(0.35),
-            style: StrokeStyle(lineWidth: isTargeted ? 2.5 : 2, dash: [11, 8])
+          RoundedRectangle(cornerRadius: 28, style: .continuous)
+            .strokeBorder(
+              isHighlighted ? ZoneTheme.accent : ZoneTheme.accent.opacity(0.35),
+              style: StrokeStyle(lineWidth: isHighlighted ? 2.5 : 2, dash: [11, 8])
+            )
+            .frame(width: 168, height: 168)
+
+          Image(
+            systemName: isTargeted
+              ? "plus.app.fill"
+              : (isHovered ? "folder.badge.plus" : "square.and.arrow.down")
           )
-          .frame(width: 168, height: 168)
-
-        Image(systemName: isTargeted ? "plus.app.fill" : "square.and.arrow.down")
           .font(.system(size: 52, weight: .light))
-          .foregroundStyle(ZoneTheme.accent.opacity(isTargeted ? 1 : 0.75))
+          .foregroundStyle(ZoneTheme.accent.opacity(isHighlighted ? 1 : 0.75))
           .symbolRenderingMode(.hierarchical)
-      }
-      .scaleEffect(isTargeted ? 1.03 : 1)
-      .animation(.easeOut(duration: 0.15), value: isTargeted)
+        }
+        .scaleEffect(isHighlighted ? 1.03 : 1)
+        .animation(.easeOut(duration: 0.15), value: isHighlighted)
 
-      VStack(spacing: 8) {
-        Text("Drop your apps here")
-          .font(.system(size: 26, weight: .medium, design: .rounded))
-          .foregroundStyle(.primary.opacity(0.85))
+        VStack(spacing: 8) {
+          Text("Drop your apps here")
+            .font(.system(size: 26, weight: .medium, design: .rounded))
+            .foregroundStyle(.primary.opacity(0.85))
 
-        Text("Apps will launch with this time zone injected.")
-          .font(.system(size: 13))
-          .foregroundStyle(.secondary)
+          Text("Click to open Applications, or drag apps here.")
+            .font(.system(size: 13))
+            .foregroundStyle(.secondary)
+
+          Text("Apps will launch with this time zone injected.")
+            .font(.system(size: 12))
+            .foregroundStyle(.tertiary)
+        }
       }
+      .frame(maxWidth: .infinity, maxHeight: .infinity)
+      .contentShape(Rectangle())
+      .background(
+        isHighlighted
+          ? ZoneTheme.accentSoft.opacity(0.5)
+          : Color.clear
+      )
     }
-    .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .contentShape(Rectangle())
-    .background(
-      isTargeted
-        ? ZoneTheme.accentSoft.opacity(0.5)
-        : Color.clear
-    )
+    .buttonStyle(.plain)
+    .onHover { isHovered = $0 }
     .onDrop(of: [.fileURL], isTargeted: $isTargeted) { providers in
       handleDrop(providers)
     }
+    .help("Click to choose apps from Applications, or drop .app files here")
+    .accessibilityLabel("Add apps")
+    .accessibilityHint("Opens the Applications folder so you can choose apps, or drop apps here")
   }
 
   private func handleDrop(_ providers: [NSItemProvider]) -> Bool {
@@ -400,6 +422,10 @@ private struct AppGridView: View {
         ForEach(model.selectedEntries, id: \.0.id) { entry, app in
           AppCardView(model: model, entry: entry, app: app)
         }
+
+        AddAppCardView {
+          model.presentAppPicker()
+        }
       }
       .padding(ZoneTheme.contentPadding)
     }
@@ -414,6 +440,46 @@ private struct AppGridView: View {
     DroppedAppLoader.load(from: providers) { url in
       model.addApp(from: url)
     }
+  }
+}
+
+private struct AddAppCardView: View {
+  let action: () -> Void
+  @State private var isHovered = false
+
+  var body: some View {
+    Button(action: action) {
+      VStack(spacing: 12) {
+        Image(systemName: "plus.app")
+          .font(.system(size: 28, weight: .light))
+          .foregroundStyle(ZoneTheme.accent)
+          .symbolRenderingMode(.hierarchical)
+
+        Text("Add App")
+          .font(.system(size: 14, weight: .semibold))
+
+        Text("Browse Applications…")
+          .font(.system(size: 11))
+          .foregroundStyle(.secondary)
+      }
+      .frame(maxWidth: .infinity, minHeight: 120)
+      .contentShape(Rectangle())
+    }
+    .buttonStyle(.plain)
+    .zoneCardStyle()
+    .overlay(
+      RoundedRectangle(cornerRadius: ZoneTheme.cardRadius, style: .continuous)
+        .strokeBorder(
+          ZoneTheme.accent.opacity(isHovered ? 0.45 : 0.22),
+          style: StrokeStyle(lineWidth: 1.5, dash: [7, 5])
+        )
+    )
+    .scaleEffect(isHovered ? 1.015 : 1)
+    .animation(.easeOut(duration: 0.12), value: isHovered)
+    .onHover { isHovered = $0 }
+    .help("Choose apps from the Applications folder")
+    .accessibilityLabel("Add app")
+    .accessibilityHint("Opens the Applications folder so you can choose apps")
   }
 }
 
