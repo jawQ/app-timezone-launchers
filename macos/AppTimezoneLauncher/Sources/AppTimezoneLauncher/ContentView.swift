@@ -4,8 +4,10 @@ import SwiftUI
 
 struct ContentView: View {
   @StateObject private var model = LauncherViewModel()
+  @EnvironmentObject private var appSettings: AppSettingsStore
   @State private var timezoneSheet: TimezoneGroupSheetMode?
   @State private var groupPendingDeletion: TimezoneGroup?
+  @State private var isSettingsPresented = false
 
   var body: some View {
     HStack(spacing: 0) {
@@ -47,9 +49,20 @@ struct ContentView: View {
         }
         .help("Add a time zone group")
       }
+      ToolbarItem {
+        Button {
+          isSettingsPresented = true
+        } label: {
+          Label("设置", systemImage: "gearshape")
+        }
+        .help("打开设置")
+      }
     }
     .sheet(item: $timezoneSheet) { mode in
       AddTimezoneSheet(model: model, mode: mode)
+    }
+    .sheet(isPresented: $isSettingsPresented) {
+      SettingsSheet(settings: appSettings)
     }
     .alert(
       "ZoneLaunch",

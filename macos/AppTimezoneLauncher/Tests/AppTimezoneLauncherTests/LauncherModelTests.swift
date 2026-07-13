@@ -311,6 +311,58 @@ func configurationStoreUsesEnvironmentConfigPathOverride() throws {
 }
 
 @Test
+func appSettingsDefaultsMatchProductExpectations() {
+  let settings = AppSettings.default
+  #expect(settings.appearance == .system)
+  #expect(settings.showInDock == true)
+}
+
+@Test
+func appearancePreferenceRawValuesAreStable() {
+  #expect(AppearancePreference.system.rawValue == "system")
+  #expect(AppearancePreference.light.rawValue == "light")
+  #expect(AppearancePreference.dark.rawValue == "dark")
+  #expect(AppearancePreference(rawValue: "dark") == .dark)
+  #expect(AppearancePreference(rawValue: "unknown") == nil)
+}
+
+@Test
+func appSettingsRepositoryRoundTripsThroughUserDefaults() {
+  let suiteName = "app.zonelaunch.tests.settings.\(UUID().uuidString)"
+  guard let defaults = UserDefaults(suiteName: suiteName) else {
+    Issue.record("Failed to create isolated UserDefaults suite")
+    return
+  }
+  defer { defaults.removePersistentDomain(forName: suiteName) }
+
+  let repository = AppSettingsRepository(defaults: defaults)
+  #expect(repository.load() == AppSettings.default)
+
+  let updated = AppSettings(appearance: .dark, showInDock: false)
+  repository.save(updated)
+  #expect(repository.load() == updated)
+
+  repository.save(AppSettings(appearance: .light, showInDock: true))
+  #expect(repository.load() == AppSettings(appearance: .light, showInDock: true))
+}
+
+@Test
+func appSettingsRepositoryFallsBackWhenStoredValuesAreMissingOrInvalid() {
+  let suiteName = "app.zonelaunch.tests.settings.fallback.\(UUID().uuidString)"
+  guard let defaults = UserDefaults(suiteName: suiteName) else {
+    Issue.record("Failed to create isolated UserDefaults suite")
+    return
+  }
+  defer { defaults.removePersistentDomain(forName: suiteName) }
+
+  defaults.set("not-a-mode", forKey: AppSettingsRepository.appearanceKey)
+  let repository = AppSettingsRepository(defaults: defaults)
+  let loaded = repository.load()
+  #expect(loaded.appearance == .system)
+  #expect(loaded.showInDock == true)
+}
+
+@Test
 @MainActor
 func droppedAppLoaderProcessesEveryFileProvider() async {
   let urls = [
