@@ -4,7 +4,7 @@
 
 ZoneLaunch is an optional **GUI** for the same idea as the shell launchers: start a macOS app with a chosen `TZ`, independent of the system time zone.
 
-**Why it exists:** Changing the system time zone for work often makes WeChat, Feishu/Lark, and similar apps show times that no longer match your physical location. ZoneLaunch (and the shell tools) let those apps keep real local time — or any IANA zone you choose — while the system can stay on a work zone (or the reverse).
+**Why it exists:** AI tools such as Claude and ChatGPT often require a supported regional time zone, but changing the system zone shifts WeChat, Feishu/Lark, and other office or social apps too. ZoneLaunch (and the shell tools) let you set a time zone per app so AI software and everything else can coexist without conflict (or the reverse).
 
 ## When to use scripts vs the app
 

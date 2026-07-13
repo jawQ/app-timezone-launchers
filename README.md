@@ -8,9 +8,9 @@ Launch macOS apps in a **chosen time zone** — independent of the system time z
 
 ## Background
 
-Many people change the **macOS system time zone** for work — for example to match a remote team, a client region, or a corporate calendar. After that change, social and messaging apps such as **WeChat**, **Feishu/Lark**, and similar tools often follow the system setting. In-app timestamps then no longer match the **physical time zone** where you actually are: messages, moments, and chat history look “shifted,” which is confusing in daily life.
+This project targets a common high-frequency scenario: when using AI software with strict regional checks — such as **Claude**, **ChatGPT**, and similar tools — you often need to change the macOS system time zone to a region the product supports. That change propagates to every other app on the system, which disrupts everyday work.
 
-This project addresses that gap. You can keep the system time zone set for work (or any other need) while starting selected apps under the time zone you care about — typically your **real local time** where you live — so app UI stays aligned with daily life. The same mechanism also works the other way around: leave the system on local time and launch only Feishu, WeChat, or other apps in a regional zone (for example `Asia/Shanghai`).
+To solve this, the project lets you assign a time zone to specific office or social apps. You can run AI tools under a supported regional zone while everything else stays on your real local time — or the reverse. The goal is to eliminate this class of time-zone conflicts entirely.
 
 Technically, each launch injects a `TZ` value into a **new** process only. It does not rewrite the system clock, and already-running apps are unaffected until you quit and relaunch them through these tools.
 
