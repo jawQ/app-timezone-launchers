@@ -14,6 +14,9 @@ enum ZoneTheme {
   static let cardRadius: CGFloat = 14
   static let sidebarWidth: CGFloat = 236
   static let contentPadding: CGFloat = 22
+
+  /// Shared content min height for app grid cards so Add App matches Launch cards.
+  static let appCardMinHeight: CGFloat = 142
 }
 
 extension View {

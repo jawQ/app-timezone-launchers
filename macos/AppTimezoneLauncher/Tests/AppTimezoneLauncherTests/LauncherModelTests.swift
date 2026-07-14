@@ -230,6 +230,76 @@ func launchRequestContainsOnlyTheSelectedTimezone() throws {
 }
 
 @Test
+func workspaceOpenConfigurationPreservesDefaultApplicationInstanceBehavior() {
+  let app = ManagedApp(
+    displayName: "CodexBar",
+    bundleIdentifier: "com.steipete.codexbar",
+    appPath: "/Applications/CodexBar.app",
+    executablePath: "/Applications/CodexBar.app/Contents/MacOS/CodexBar"
+  )
+  let group = TimezoneGroup(name: "China Mainland", ianaTimezone: "Asia/Shanghai")
+  let request = LaunchRequest(app: app, group: group)
+
+  let configuration = AppLauncher.openConfiguration(for: request)
+
+  #expect(configuration.environment == ["TZ": "Asia/Shanghai"])
+  #expect(!configuration.createsNewApplicationInstance)
+  #expect(configuration.allowsRunningApplicationSubstitution)
+}
+
+@Test
+func batchLaunchPolicyAllowsWhenNoAppsAreRunning() {
+  let apps = [
+    ManagedApp(
+      displayName: "Lark",
+      bundleIdentifier: "com.electron.lark",
+      appPath: "/Applications/Lark.app",
+      executablePath: "/Applications/Lark.app/Contents/MacOS/Lark"
+    ),
+    ManagedApp(
+      displayName: "WeChat",
+      bundleIdentifier: "com.tencent.xinWeChat",
+      appPath: "/Applications/WeChat.app",
+      executablePath: "/Applications/WeChat.app/Contents/MacOS/WeChat"
+    ),
+  ]
+
+  let blocked = BatchLaunchPolicy.runningAppsBlockingBatchLaunch(apps: apps) { _ in false }
+
+  #expect(blocked.isEmpty)
+}
+
+@Test
+func batchLaunchPolicyBlocksWhenAnyAppIsRunningAndSortsNames() {
+  let apps = [
+    ManagedApp(
+      displayName: "WeChat",
+      bundleIdentifier: "com.tencent.xinWeChat",
+      appPath: "/Applications/WeChat.app",
+      executablePath: "/Applications/WeChat.app/Contents/MacOS/WeChat"
+    ),
+    ManagedApp(
+      displayName: "CodexBar",
+      bundleIdentifier: "com.steipete.codexbar",
+      appPath: "/Applications/CodexBar.app",
+      executablePath: "/Applications/CodexBar.app/Contents/MacOS/CodexBar"
+    ),
+    ManagedApp(
+      displayName: "Lark",
+      bundleIdentifier: "com.electron.lark",
+      appPath: "/Applications/Lark.app",
+      executablePath: "/Applications/Lark.app/Contents/MacOS/Lark"
+    ),
+  ]
+
+  let blocked = BatchLaunchPolicy.runningAppsBlockingBatchLaunch(apps: apps) { app in
+    app.displayName == "WeChat" || app.displayName == "CodexBar"
+  }
+
+  #expect(blocked == ["CodexBar", "WeChat"])
+}
+
+@Test
 func workspaceAppLauncherUsesTheBundlePathAndInjectsTimezone() async throws {
   let temporaryDirectory = try makeTemporaryDirectory()
   defer { try? FileManager.default.removeItem(at: temporaryDirectory) }

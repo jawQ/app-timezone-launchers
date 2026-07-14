@@ -50,6 +50,8 @@ cat >"$CONTENTS_DIR/Info.plist" <<PLIST
   <string>$APP_BUILD</string>
   <key>LSMinimumSystemVersion</key>
   <string>14.0</string>
+  <key>LSUIElement</key>
+  <true/>
   <key>NSHighResolutionCapable</key>
   <true/>
 </dict>
@@ -59,4 +61,3 @@ PLIST
 codesign --force --sign - "$APP_BUNDLE"
 
 echo "Built: $APP_BUNDLE ($CANONICAL_BUNDLE_ID v$APP_VERSION build $APP_BUILD)"
-

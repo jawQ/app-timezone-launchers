@@ -7,6 +7,7 @@ struct ContentView: View {
   @EnvironmentObject private var appSettings: AppSettingsStore
   @State private var timezoneSheet: TimezoneGroupSheetMode?
   @State private var groupPendingDeletion: TimezoneGroup?
+  @State private var groupPendingLaunchAll: TimezoneGroup?
   @State private var isSettingsPresented = false
 
   var body: some View {
@@ -36,6 +37,9 @@ struct ContentView: View {
         },
         onDeleteGroup: { group in
           groupPendingDeletion = group
+        },
+        onLaunchAll: { group in
+          groupPendingLaunchAll = group
         }
       )
     }
@@ -56,6 +60,15 @@ struct ContentView: View {
           Label("设置", systemImage: "gearshape")
         }
         .help("打开设置")
+      }
+      ToolbarItem {
+        Button {
+          AppChromeController.shared.quit()
+        } label: {
+          Label("退出应用", systemImage: "power")
+        }
+        .help("完全退出 ZoneLaunch（菜单栏图标也会消失）")
+        .accessibilityLabel("退出应用")
       }
     }
     .sheet(item: $timezoneSheet) { mode in
@@ -101,6 +114,27 @@ struct ContentView: View {
           "Delete “\(group.name)” and remove \(appCount) app record\(appCount == 1 ? "" : "s") from this group? Installed apps on your Mac are not affected."
         )
       }
+    }
+    .alert(
+      "Launch All Apps?",
+      isPresented: Binding(
+        get: { groupPendingLaunchAll != nil },
+        set: { if !$0 { groupPendingLaunchAll = nil } }
+      ),
+      presenting: groupPendingLaunchAll
+    ) { group in
+      Button("Cancel", role: .cancel) {
+        groupPendingLaunchAll = nil
+      }
+      Button("Launch All") {
+        model.launchAll(in: group)
+        groupPendingLaunchAll = nil
+      }
+    } message: { group in
+      let appCount = model.configuration.entries(for: group.id).count
+      Text(
+        "Launch \(appCount) app\(appCount == 1 ? "" : "s") in “\(group.name)” with \(group.ianaTimezone)? All apps in this group must be quit first so the time zone can be applied."
+      )
     }
   }
 }
@@ -226,14 +260,17 @@ private struct MainPanelView: View {
   @ObservedObject var model: LauncherViewModel
   var onEditGroup: (TimezoneGroup) -> Void
   var onDeleteGroup: (TimezoneGroup) -> Void
+  var onLaunchAll: (TimezoneGroup) -> Void
 
   var body: some View {
     VStack(spacing: 0) {
       if let group = model.selectedGroup {
         HeaderView(
           group: group,
+          appCount: model.selectedEntries.count,
           onEditGroup: { onEditGroup(group) },
-          onDeleteGroup: { onDeleteGroup(group) }
+          onDeleteGroup: { onDeleteGroup(group) },
+          onLaunchAll: { onLaunchAll(group) }
         )
 
         Rectangle()
@@ -263,8 +300,10 @@ private struct MainPanelView: View {
 
 private struct HeaderView: View {
   let group: TimezoneGroup
+  let appCount: Int
   let onEditGroup: () -> Void
   let onDeleteGroup: () -> Void
+  let onLaunchAll: () -> Void
   @State private var now = Date()
 
   private let timer = Timer.publish(every: 15, on: .main, in: .common).autoconnect()
@@ -291,6 +330,21 @@ private struct HeaderView: View {
       }
 
       Spacer(minLength: 12)
+
+      Button(action: onLaunchAll) {
+        Label("Launch All", systemImage: "play.fill")
+          .font(.system(size: 13, weight: .semibold))
+      }
+      .buttonStyle(.borderedProminent)
+      .tint(ZoneTheme.accent)
+      .controlSize(.large)
+      .disabled(appCount == 0)
+      .help(
+        appCount == 0
+          ? "Add apps to this time zone before launching all"
+          : "Launch every app in this time zone group"
+      )
+      .accessibilityLabel("Launch all apps in \(group.name)")
 
       VStack(alignment: .trailing, spacing: 4) {
         Text(TimezoneDisplay.currentTime(for: group.ianaTimezone, at: now))
@@ -450,6 +504,8 @@ private struct AddAppCardView: View {
   var body: some View {
     Button(action: action) {
       VStack(spacing: 12) {
+        Spacer(minLength: 0)
+
         Image(systemName: "plus.app")
           .font(.system(size: 28, weight: .light))
           .foregroundStyle(ZoneTheme.accent)
@@ -461,8 +517,10 @@ private struct AddAppCardView: View {
         Text("Browse Applications…")
           .font(.system(size: 11))
           .foregroundStyle(.secondary)
+
+        Spacer(minLength: 0)
       }
-      .frame(maxWidth: .infinity, minHeight: 120)
+      .frame(maxWidth: .infinity, minHeight: ZoneTheme.appCardMinHeight)
       .contentShape(Rectangle())
     }
     .buttonStyle(.plain)
@@ -526,6 +584,8 @@ private struct AppCardView: View {
         .accessibilityLabel("Remove \(app.displayName) from this time zone")
       }
 
+      Spacer(minLength: 0)
+
       Button {
         model.launch(entry: entry, app: app)
       } label: {
@@ -538,6 +598,7 @@ private struct AppCardView: View {
       .tint(ZoneTheme.accent)
       .controlSize(.large)
     }
+    .frame(maxWidth: .infinity, minHeight: ZoneTheme.appCardMinHeight, alignment: .top)
     .zoneCardStyle()
     .scaleEffect(isHovered ? 1.015 : 1)
     .animation(.easeOut(duration: 0.12), value: isHovered)

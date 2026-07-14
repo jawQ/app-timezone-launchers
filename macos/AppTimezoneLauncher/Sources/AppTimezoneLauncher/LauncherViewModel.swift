@@ -28,16 +28,7 @@ final class LauncherViewModel: ObservableObject {
 
   var selectedEntries: [(LauncherEntry, ManagedApp)] {
     guard let group = selectedGroup else { return [] }
-    return
-      configuration
-      .entries(for: group.id)
-      .compactMap { entry in
-        guard let app = configuration.app(for: entry) else { return nil }
-        return (entry, app)
-      }
-      .sorted {
-        $0.1.displayName.localizedCaseInsensitiveCompare($1.1.displayName) == .orderedAscending
-      }
+    return entries(for: group).map { ($0.entry, $0.app) }
   }
 
   init() {
@@ -173,6 +164,54 @@ final class LauncherViewModel: ObservableObject {
     } catch {
       alertMessage = error.localizedDescription
     }
+  }
+
+  /// Launches every app in the group only when **none** are already running.
+  /// Partially running groups are refused so system-timezone instances (login
+  /// items / manual opens) are not mixed with TZ-injected launches.
+  func launchAll(in group: TimezoneGroup) {
+    let pairs = entries(for: group)
+    guard !pairs.isEmpty else { return }
+
+    let runningNames = BatchLaunchPolicy.runningAppsBlockingBatchLaunch(
+      apps: pairs.map(\.app),
+      isRunning: isRunning(app:)
+    )
+
+    if !runningNames.isEmpty {
+      let listed = runningNames.joined(separator: ", ")
+      alertMessage =
+        "Cannot launch all apps in “\(group.name)”. Quit these first so the time zone can be applied: \(listed)."
+      return
+    }
+
+    for pair in pairs {
+      do {
+        try launcher.launch(app: pair.app, in: group) { [weak self] errorMessage in
+          guard let errorMessage else { return }
+          Task { @MainActor in
+            self?.alertMessage = errorMessage
+          }
+        }
+      } catch {
+        alertMessage = error.localizedDescription
+        return
+      }
+    }
+  }
+
+  /// Sorted (entry, app) pairs for a group — same order as the main panel grid.
+  func entries(for group: TimezoneGroup) -> [(entry: LauncherEntry, app: ManagedApp)] {
+    configuration
+      .entries(for: group.id)
+      .compactMap { entry in
+        guard let app = configuration.app(for: entry) else { return nil }
+        return (entry, app)
+      }
+      .sorted {
+        $0.app.displayName.localizedCaseInsensitiveCompare($1.app.displayName)
+          == .orderedAscending
+      }
   }
 
   func remove(entry: LauncherEntry) {

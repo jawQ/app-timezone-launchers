@@ -3,9 +3,14 @@ import AppTimezoneLauncherCore
 
 @MainActor
 final class AppDelegate: NSObject, NSApplicationDelegate {
+  func applicationWillFinishLaunching(_ notification: Notification) {
+    applyPersistedSettings()
+  }
+
   func applicationDidFinishLaunching(_ notification: Notification) {
-    let settings = AppSettingsRepository().load()
-    AppChromeController.shared.apply(settings: settings)
+    // SwiftUI may adjust the activation policy while creating its scenes, so apply
+    // the persisted preference again after launch completes.
+    applyPersistedSettings()
   }
 
   func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
@@ -26,5 +31,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // instead of letting AppKit / SwiftUI spawn a second main window.
     AppChromeController.shared.showMainWindow()
     return true
+  }
+
+  private func applyPersistedSettings() {
+    let settings = AppSettingsRepository().load()
+    AppChromeController.shared.apply(settings: settings)
   }
 }
