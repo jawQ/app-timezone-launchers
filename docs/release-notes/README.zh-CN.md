@@ -7,7 +7,7 @@
 | | 英文 | 中文 |
 | --- | --- | --- |
 | 内容 | 只写英文说明 | 只写中文说明 |
-| GitHub Release 页 | **默认正文** | 顶部 **[中文 →]** 进入完整中文 |
+| GitHub Release 页 | **默认正文** | 顶部 **[中文 →]** 下载该版本的完整中文附件 |
 | 手写源文件 | `vX.Y.Z-en.md`（可选） | `vX.Y.Z-zh.md`（可选） |
 | CI 始终产出 | `RELEASE_NOTES.md`（正文） | `RELEASE_NOTES.zh-CN.md`（附件） |
 

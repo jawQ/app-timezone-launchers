@@ -92,7 +92,7 @@ Tags must look like `v1.2.3` (three numeric parts). The workflow matches `v*`.
 - `SHA256SUMS` — checksums for all four platform archives
 - **Release notes (always both languages)**
   - English: Release page body (`RELEASE_NOTES.md`)
-  - Chinese: top **[中文 →]** opens `docs/release-notes/vX.Y.Z-zh.md` on GitHub; `RELEASE_NOTES.zh-CN.md` remains a download asset
+  - Chinese: top **[中文 →]** downloads the versioned `RELEASE_NOTES.zh-CN.md` asset
 - GitHub’s automatic source zip/tar (not the app)
 
 Builds are **not notarized**. End-user Gatekeeper steps: [Install from Releases](install-from-release.md).
@@ -102,7 +102,7 @@ Builds are **not notarized**. End-user Gatekeeper steps: [Install from Releases]
 | | English | Chinese |
 | --- | --- | --- |
 | Prose language | English only | Chinese only |
-| GitHub | **Default body** | **[中文 →]** → rendered `docs/release-notes/vX.Y.Z-zh.md` |
+| GitHub | **Default body** | **[中文 →]** → versioned `RELEASE_NOTES.zh-CN.md` asset |
 | Optional curated | `docs/release-notes/vX.Y.Z-en.md` | `docs/release-notes/vX.Y.Z-zh.md` |
 
 Commit subjects are **not** translated. Do not mix languages inside one notes file.

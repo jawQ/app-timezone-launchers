@@ -201,6 +201,7 @@ jobs:
           ./scripts/generate-release-notes.sh "${{ needs.build-macos.outputs.tag }}"
           test -f dist/RELEASE_NOTES.md
           test -f dist/RELEASE_NOTES.zh-CN.md
+          grep -Fq "/releases/download/${{ needs.build-macos.outputs.tag }}/RELEASE_NOTES.zh-CN.md" dist/RELEASE_NOTES.md
           echo "----- ENGLISH (Release body) -----"
           cat dist/RELEASE_NOTES.md
           echo "----- CHINESE (asset) -----"
@@ -211,7 +212,7 @@ jobs:
         with:
           tag_name: ${{ needs.build-macos.outputs.tag }}
           name: ZoneLaunch ${{ needs.build-macos.outputs.version }}
-          # English body; Chinese is RELEASE_NOTES.zh-CN.md (linked as 中文 entry).
+          # English body; 中文 links to the uploaded RELEASE_NOTES.zh-CN.md asset.
           generate_release_notes: false
           fail_on_unmatched_files: true
           body_path: dist/RELEASE_NOTES.md

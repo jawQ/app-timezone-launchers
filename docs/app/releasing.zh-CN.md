@@ -92,7 +92,7 @@ tag 必须是 `v1.2.3` 这种三段数字。workflow 匹配 `v*`。
 - `SHA256SUMS` — 全部四个平台压缩包的统一校验和
 - **版本日志（每版固定两种语言）**
   - 英文：Release 页默认正文（`RELEASE_NOTES.md`）
-  - 中文：顶部 **[中文 →]** 在线打开 `docs/release-notes/vX.Y.Z-zh.md`；`RELEASE_NOTES.zh-CN.md` 仍作为下载附件
+  - 中文：顶部 **[中文 →]** 下载该版本的 `RELEASE_NOTES.zh-CN.md` 附件
 - GitHub 自动附带的源码 zip/tar（不是 App）
 
 构建**未公证**。终端用户门禁步骤见：[从 Release 安装](install-from-release.zh-CN.md)。
@@ -102,7 +102,7 @@ tag 必须是 `v1.2.3` 这种三段数字。workflow 匹配 `v*`。
 | | 英文 | 中文 |
 | --- | --- | --- |
 | 说明文字语言 | 只写英文 | 只写中文 |
-| GitHub | **默认正文** | **[中文 →]** → 在线阅读 `docs/release-notes/vX.Y.Z-zh.md` |
+| GitHub | **默认正文** | **[中文 →]** → 该版本的 `RELEASE_NOTES.zh-CN.md` 附件 |
 | 可选手写 | `docs/release-notes/vX.Y.Z-en.md` | `docs/release-notes/vX.Y.Z-zh.md` |
 
 提交说明**不翻译**。同一说明文件内不要中英夹带。

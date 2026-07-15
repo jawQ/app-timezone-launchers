@@ -7,7 +7,7 @@
 | | English | Chinese |
 | --- | --- | --- |
 | Content | English UI only | Chinese UI only |
-| GitHub Release page | **Default body** | **[中文 →]** entry → full notes file |
+| GitHub Release page | **Default body** | **[中文 →]** entry → versioned release asset |
 | Source of truth | `vX.Y.Z-en.md` (optional curated) | `vX.Y.Z-zh.md` (optional curated) |
 | CI always uploads | `RELEASE_NOTES.md` (body) | `RELEASE_NOTES.zh-CN.md` (asset) |
 
