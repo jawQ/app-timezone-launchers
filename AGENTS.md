@@ -48,7 +48,7 @@ npm run release:tag:test              # self-test
 
 Underlying scripts: `./scripts/release-tag.sh`, `./scripts/generate-release-notes.sh`.  
 Every release has **both** languages (separate files, no mixed prose): `docs/release-notes/vX.Y.Z-en.md`
-+ `vX.Y.Z-zh.md` (or auto-generated). GH body is English; Chinese is `RELEASE_NOTES.zh-CN.md` + **[中文 →]** link.
++ `vX.Y.Z-zh.md` (or auto-generated). GH body is English; **[中文 →]** opens the Chinese Markdown page at that tag.
 
 **VS Code / Cursor:** `.vscode/tasks.json` — Command Palette → **Tasks: Run Task** → **`release:tag`**.
 ## App identity

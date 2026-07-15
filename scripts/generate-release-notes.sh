@@ -414,7 +414,7 @@ build_release_body_en() {
   cat <<EOF
 # ZoneLaunch ${tag}
 
-**[中文 →](https://github.com/${slug}/releases/download/${tag}/RELEASE_NOTES.zh-CN.md)**
+**[中文 →](https://github.com/${slug}/blob/${tag}/docs/release-notes/${tag}-zh.md)**
 
 ${en_body}
 EOF

@@ -48,7 +48,7 @@ npm run release:tag:test              # 自检
 
 底层脚本：`./scripts/release-tag.sh`、`./scripts/generate-release-notes.sh`。  
 每个版本都有**中英两套**说明（分文件、不夹带）：`docs/release-notes/vX.Y.Z-en.md` + `vX.Y.Z-zh.md`
-（可选手写，缺则自动生成）。GitHub 正文为英文；中文为 `RELEASE_NOTES.zh-CN.md` + **[中文 →]** 入口。
+（可选手写，缺则自动生成）。GitHub 正文为英文；**[中文 →]** 在线打开该 tag 下的中文 Markdown。
 
 **VS Code / Cursor：** `.vscode/tasks.json` — 命令面板 → **Tasks: Run Task** → **`release:tag`**。
 ## 应用身份
