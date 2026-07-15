@@ -2,33 +2,37 @@
 
 [English](README.md)
 
-以**指定时区**启动 macOS 应用，与系统时区相互独立。
+以**指定时区**启动应用，与系统时区相互独立。
 
-> 仅支持 macOS。尚未测试 Windows / Linux，因而不提供支持。
-
-## 项目背景
-
-本项目可针对特定高频场景开发：在使用 Claude、ChatGPT 等对 IP 校验较为严格的 AI 软件时，用户通常需要将系统时区修改为产品支持的允许地区。然而，这会导致系统内其他软件也同步切换至该时区，影响日常办公。
-
-为了解决这一痛点，本项目支持为特定的办公或社交软件单独配置时区，确保在运行 AI 软件的同时，其他程序仍能保持本地时间。本项目旨在完美解决此类时区冲突场景。
+| 平台 | 状态 |
+| --- | --- |
+| **macOS** | Shell 启动命令 + 可选 **ZoneLaunch** 图形界面 |
+| **Windows** | 原生 CMD/PowerShell 启动器 + **WSL** 辅助命令 |
+| 裸机 Linux | 非一等目标；Windows 上的 WSL 路径可覆盖大量 Linux 工作流 |
 
 技术上，每次启动只向**新进程**注入 `TZ`，不会改写系统时钟；已在运行的应用需退出后，再用本工具重新启动才会生效。
 
-## 两种用法
+## 项目背景
 
-| | **Shell 启动命令（默认）** | **ZoneLaunch App（可选）** |
-| --- | --- | --- |
-| 适合 | 固定几个 App（飞书、微信等） | 任意 App、拖拽管理、多时区组 |
-| 体积 | 几 KB 脚本 | 普通 macOS `.app` |
-| 安装 | 下文 `./install.sh` | [GitHub Releases](https://github.com/jawQ/app-timezone-launchers/releases/latest) 或源码构建 |
-| 依赖 | 终端 + `PATH` | macOS 14+ |
+本项目针对高频场景：在使用 Claude、ChatGPT 等对区域/时区较敏感的 AI 软件时，用户常需把**系统时区**改成产品支持的地区，但这会牵连微信、飞书等所有应用。
 
-**大多数场景只装脚本即可**——最轻量，无需图形界面。  
-想要更好体验时再用 **[ZoneLaunch](docs/app/overview.zh-CN.md)**（下载或自建）。机制相同：只给**新启动**的进程注入 `TZ`。
+本项目支持为特定办公/社交软件（或 CLI）单独注入时区，让 AI 工具与日常软件可以并存。
+
+## 支持的入口
+
+| | **macOS 脚本** | **ZoneLaunch（macOS GUI）** | **Windows 原生** | **WSL** |
+| --- | --- | --- | --- | --- |
+| 适合 | 固定几个 App（飞书、微信等） | 任意 App、拖拽、多时区组 | CMD / PowerShell / 双击 | VS Code、Docker、Linux CLI；可选拉起 Windows `.exe` |
+| 安装 | `./install.sh` | [Releases](https://github.com/jawQ/app-timezone-launchers/releases/latest)（`*-macos.zip`） | `windows\install.ps1` | `windows/wsl/install.sh` |
+| 文档 | 下文 | [App 概览](docs/app/overview.zh-CN.md) | [Windows](docs/windows/overview.zh-CN.md) | [WSL](docs/windows/wsl.zh-CN.md) |
+
+**大多数场景只装脚本即可**。macOS 需要图形界面时用 **[ZoneLaunch](docs/app/overview.zh-CN.md)**。
 
 ---
 
-## Shell 启动命令（推荐默认）
+## macOS Shell 启动命令（Mac 上推荐默认）
+
+> 下列命令与 `./install.sh` **仅适用于 macOS（Darwin）**。Windows 用户请看 [Windows 安装](docs/windows/install.zh-CN.md)。
 
 ### 内置命令
 
@@ -97,9 +101,26 @@ rm -f "$HOME/.local/bin/feishu-tz" "$HOME/.local/bin/wechat-tz"
 
 ---
 
-## ZoneLaunch App（更好体验，可选）
+## Windows（CMD / PowerShell / WSL）
 
-GitHub Releases 提供 **ad-hoc 签名** 预构建包（无需付费苹果开发者账号，**未公证**）。
+与 macOS **并排支持**——**不改变**上文 macOS 安装路径。
+
+| 工作面 | 安装 | 文档 |
+| --- | --- | --- |
+| CMD / PowerShell / 双击 | `powershell -ExecutionPolicy Bypass -File .\windows\install.ps1 -All -AddToPath` | [安装](docs/windows/install.zh-CN.md) |
+| WSL（VS Code、Docker、Linux CLI） | 在发行版内执行 `./windows/wsl/install.sh --all` | [WSL](docs/windows/wsl.zh-CN.md) |
+
+本平台发版压缩包：**`app-timezone-launchers-<version>-windows.zip`**（文件名与解压顶层目录均含 `-windows`）。
+
+macOS 应用包仍为：**`ZoneLaunch-<version>-macos.zip`**。
+
+概览：[docs/windows/overview.zh-CN.md](docs/windows/overview.zh-CN.md)。
+
+---
+
+## ZoneLaunch App（macOS 图形界面，可选）
+
+GitHub Releases 提供 **ad-hoc 签名** 预构建包（无需付费苹果开发者账号，**未公证**）。资源文件名以 **`-macos`** 结尾。
 
 - **下载：** https://github.com/jawQ/app-timezone-launchers/releases/latest  
 - **完整安装与门禁说明：** [从 Release 安装](docs/app/install-from-release.zh-CN.md)  
@@ -143,9 +164,12 @@ npm run release:tag -- 0.2.0  # 指定版本
 
 | 模块 | 内容 |
 | --- | --- |
-| [可选启动命令](docs/scripts/optional-launchers.zh-CN.md) | Slack / LINE 脚本 |
+| [可选启动命令](docs/scripts/optional-launchers.zh-CN.md) | Slack / LINE 脚本（macOS） |
 | [地区参考](docs/scripts/regional-references.zh-CN.md) | 各地区常用时区 |
-| [App 概览](docs/app/overview.zh-CN.md) | 脚本 vs 图形界面 |
+| [Windows 概览](docs/windows/overview.zh-CN.md) | CMD / PowerShell / WSL |
+| [Windows 安装](docs/windows/install.zh-CN.md) | 原生 + Release zip |
+| [WSL](docs/windows/wsl.zh-CN.md) | VS Code、Docker、互通 |
+| [App 概览](docs/app/overview.zh-CN.md) | 脚本 vs 图形界面（macOS） |
 | [从 Release 安装 App](docs/app/install-from-release.zh-CN.md) | 下载 zip、门禁提示 |
 | [从源码构建 App](docs/app/build-from-source.zh-CN.md) | 本地构建 / 打包 |
 | [发布 Release](docs/app/releasing.zh-CN.md) | 维护者：`npm run release:tag` |

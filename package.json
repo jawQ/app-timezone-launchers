@@ -2,13 +2,17 @@
   "name": "app-timezone-launchers",
   "version": "0.1.0",
   "private": true,
-  "description": "macOS time-zone launchers (shell + ZoneLaunch app)",
+  "description": "Time-zone launchers for macOS (shell + ZoneLaunch) and Windows (CMD/PS + WSL)",
   "scripts": {
     "release:tag": "bash scripts/release-tag.sh",
     "release:tag:dry-run": "bash scripts/release-tag.sh --dry-run",
     "release:tag:test": "bash scripts/release-tag.sh --self-test",
     "release:notes": "bash scripts/generate-release-notes.sh",
     "release:package": "bash macos/AppTimezoneLauncher/scripts/package-release.sh",
-    "test:release-tag": "bash scripts/release-tag.sh --self-test"
+    "release:package:windows": "bash windows/scripts/package-scripts.sh",
+    "release:package:windows-cli": "bash windows/scripts/build-cli.sh",
+    "test:release-tag": "bash scripts/release-tag.sh --self-test",
+    "test:windows": "bash windows/scripts/test-wsl-helpers.sh && bash windows/scripts/test-ps-helpers.sh && bash windows/scripts/test-package-scripts.sh",
+    "test:windows-cli": "cd windows/cli && go test ./..."
   }
 }

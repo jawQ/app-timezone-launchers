@@ -1,0 +1,27 @@
+#!/usr/bin/env bash
+# Launch VS Code (or code CLI) from WSL with TZ for this process tree.
+#
+# Usage:
+#   code-tz .
+#   CODE_TZ=America/Los_Angeles code-tz /path/to/project
+#   CODE_BIN=code-insiders code-tz .
+#
+# This affects the Linux-side `code` helper and any child processes it starts
+# under WSL. The Windows VS Code UI may still use Windows locale/time for some
+# chrome; Remote/WSL extension hosts and integrated terminals inherit TZ more
+# reliably when started from this wrapper.
+
+set -euo pipefail
+
+CODE_TZ="${CODE_TZ:-Asia/Shanghai}"
+CODE_BIN="${CODE_BIN:-code}"
+
+if ! command -v "$CODE_BIN" >/dev/null 2>&1; then
+  echo "Command not found: $CODE_BIN" >&2
+  echo "Install the VS Code 'code' shell command, or set CODE_BIN." >&2
+  exit 1
+fi
+
+export TZ="$CODE_TZ"
+echo "Starting $CODE_BIN with TZ=$CODE_TZ"
+exec "$CODE_BIN" "$@"

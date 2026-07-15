@@ -86,7 +86,10 @@ tag 必须是 `v1.2.3` 这种三段数字。workflow 匹配 `v*`。
 ## 会发布什么
 
 - `ZoneLaunch-<version>-macos.zip` — ad-hoc 签名的 App + `README-FIRST.txt`
-- `SHA256SUMS`
+- `app-timezone-launchers-<version>-windows.zip` — Windows 原生 CMD/PowerShell 启动器 + WSL 辅助
+- `ZoneLaunch-cli-<version>-windows-amd64.zip` — Intel/AMD Windows CLI
+- `ZoneLaunch-cli-<version>-windows-arm64.zip` — ARM/骁龙 Windows CLI
+- `SHA256SUMS` — 全部四个平台压缩包的统一校验和
 - **版本日志（每版固定两种语言）**
   - 英文：Release 页默认正文（`RELEASE_NOTES.md`）
   - 中文：顶部 **[中文 →]** 在线打开 `docs/release-notes/vX.Y.Z-zh.md`；`RELEASE_NOTES.zh-CN.md` 仍作为下载附件

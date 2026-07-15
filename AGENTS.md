@@ -4,25 +4,39 @@
 
 ## Project structure and modules
 
-The root `bin/` directory contains shell launchers such as `feishu-tz` and `wechat-tz`.
-`install.sh` installs them to a user-specified prefix. User-facing documentation lives in
-`README.md` / `README.zh-CN.md` and modular `docs/`:
+The root `bin/` directory contains **macOS** shell launchers such as `feishu-tz` and `wechat-tz`.
+`install.sh` installs them to a user-specified prefix (**Darwin only**). User-facing documentation
+lives in `README.md` / `README.zh-CN.md` and modular `docs/`:
 
-- `docs/scripts/` — shell launchers (primary, lightest path)
-- `docs/app/` — ZoneLaunch GUI (optional, better UX)
+- `docs/scripts/` — macOS shell launchers (primary, lightest path on Mac)
+- `docs/app/` — ZoneLaunch GUI for macOS (optional, better UX)
+- `docs/windows/` — Windows native (CMD/PowerShell) + WSL helpers
 - `docs/superpowers/` and `.superpowers/` — internal agent/design notes only (gitignored)
 
-The native app is a Swift Package at `macos/AppTimezoneLauncher/`. Put reusable non-UI
+**Windows** code lives only under `windows/` (do not fold into macOS paths):
+
+- `windows/bin/` — PowerShell + CMD launchers
+- `windows/install.ps1` — native install
+- `windows/wsl/` — WSL bash helpers (`run-with-tz`, `code-tz`, `docker-tz`, Win app interop)
+- `windows/scripts/package-scripts.sh` — produces `app-timezone-launchers-<ver>-windows.zip`
+
+The native macOS app is a Swift Package at `macos/AppTimezoneLauncher/`. Put reusable non-UI
 logic in `Sources/AppTimezoneLauncherCore/`; SwiftUI views and view models belong in
 `Sources/AppTimezoneLauncher/`. Tests live in `Tests/AppTimezoneLauncherTests/`, and icon
 source files and generated resources live in `Resources/`. Do not edit `.build/` or `build/`;
 both are ignored generated directories. Release zips land in `dist/` (also gitignored).
 
-### GitHub Releases (app zip, no paid Apple account)
+### GitHub Releases (platform-labeled assets only)
 
-Pushing a tag matching `v*` runs `.github/workflows/release-macos-app.yml` on `macos-latest`:
-tests, `package-release.sh`, upload of `ZoneLaunch-<version>-macos.zip` + `SHA256SUMS`.
-Builds are **ad-hoc signed** only (no Developer ID / notarization).
+Pushing a tag matching `v*` runs `.github/workflows/release-macos-app.yml` as three jobs:
+parallel macOS and Windows builds, followed by one release job that verifies and uploads all assets.
+macOS builds are **ad-hoc signed** only (no Developer ID / notarization).
+
+**Every downloadable asset or top-level extract folder must include a platform suffix**
+(`-macos`, `-windows`, future `-wsl` / Windows GUI names). Never publish an unlabeled
+`ZoneLaunch.zip`. Windows scripts: `npm run release:package:windows` →
+`app-timezone-launchers-<version>-windows.zip`; Windows CLI builds add platform + architecture
+(`ZoneLaunch-cli-<version>-windows-amd64.zip` / `-arm64.zip`).
 
 Full maintainer guide: [`docs/app/releasing.md`](docs/app/releasing.md) (and [zh-CN](docs/app/releasing.zh-CN.md)).
 

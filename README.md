@@ -2,33 +2,39 @@
 
 [Simplified Chinese](README.zh-CN.md)
 
-Launch macOS apps in a **chosen time zone** — independent of the system time zone.
+Launch apps in a **chosen time zone** — independent of the system time zone.
 
-> macOS only. Windows and Linux are untested and unsupported.
-
-## Background
-
-This project targets a common high-frequency scenario: when using AI software with strict regional checks — such as **Claude**, **ChatGPT**, and similar tools — you often need to change the macOS system time zone to a region the product supports. That change propagates to every other app on the system, which disrupts everyday work.
-
-To solve this, the project lets you assign a time zone to specific office or social apps. You can run AI tools under a supported regional zone while everything else stays on your real local time — or the reverse. The goal is to eliminate this class of time-zone conflicts entirely.
+| Platform | Status |
+| --- | --- |
+| **macOS** | Shell launchers + optional **ZoneLaunch** GUI |
+| **Windows** | Native CMD/PowerShell launchers + **WSL** helpers |
+| Linux (bare metal) | Not a first-class target; WSL path covers many Windows+Linux workflows |
 
 Technically, each launch injects a `TZ` value into a **new** process only. It does not rewrite the system clock, and already-running apps are unaffected until you quit and relaunch them through these tools.
 
-## Two ways to use this project
+## Background
 
-| | **Shell launchers (default)** | **ZoneLaunch app (optional)** |
-| --- | --- | --- |
-| Best for | A few fixed apps (Feishu, WeChat, …) | Many apps, drag-and-drop, time-zone groups |
-| Weight | A few KB of shell | Normal macOS `.app` |
-| Install | `./install.sh` below | [GitHub Releases](https://github.com/jawQ/app-timezone-launchers/releases/latest) or build from source |
-| Needs | Terminal + `PATH` | macOS 14+ |
+This project targets a common high-frequency scenario: when using AI software with strict regional checks — such as **Claude**, **ChatGPT**, and similar tools — you often need to change the system time zone to a region the product supports. That change propagates to every other app on the system, which disrupts everyday work.
 
-**Most people only need the scripts** — lightest path, no GUI.  
-Want a nicer UI? Use **[ZoneLaunch](docs/app/overview.md)** (download or build). Same idea either way: inject `TZ` into a **new** process only.
+To solve this, the project lets you assign a time zone to specific office or social apps (or CLI tools). You can run AI tools under a supported regional zone while everything else stays on your real local time — or the reverse.
+
+## Supported entry points
+
+| | **macOS scripts** | **ZoneLaunch (macOS GUI)** | **Windows native** | **WSL** |
+| --- | --- | --- | --- | --- |
+| Best for | Fixed apps (Feishu, WeChat, …) | Many apps, drag-and-drop | CMD / PowerShell / double-click | VS Code, Docker, Linux CLIs; optional Windows `.exe` interop |
+| Install | `./install.sh` | [Releases](https://github.com/jawQ/app-timezone-launchers/releases/latest) (`*-macos.zip`) | `windows\install.ps1` | `windows/wsl/install.sh` |
+| Docs | below | [App overview](docs/app/overview.md) | [Windows](docs/windows/overview.md) | [WSL](docs/windows/wsl.md) |
+
+**Most people only need scripts** — lightest path.
+
+macOS users who want a GUI: **[ZoneLaunch](docs/app/overview.md)**.
 
 ---
 
-## Shell launchers (recommended default)
+## macOS shell launchers (recommended default on Mac)
+
+> These commands and `./install.sh` are **macOS only** (Darwin). Windows users: see [Windows](docs/windows/install.md).
 
 ### Built-in commands
 
@@ -97,9 +103,26 @@ rm -f "$HOME/.local/bin/feishu-tz" "$HOME/.local/bin/wechat-tz"
 
 ---
 
-## ZoneLaunch app (better UI, optional)
+## Windows (CMD / PowerShell / WSL)
 
-Prebuilt **ad-hoc signed** builds are on GitHub Releases (no paid Apple Developer account, **not notarized**).
+Side-by-side support — **does not change** the macOS install path above.
+
+| Surface | Install | Docs |
+| --- | --- | --- |
+| CMD / PowerShell / double-click | `powershell -ExecutionPolicy Bypass -File .\windows\install.ps1 -All -AddToPath` | [Install](docs/windows/install.md) |
+| WSL (VS Code, Docker, Linux CLIs) | `./windows/wsl/install.sh --all` inside the distro | [WSL](docs/windows/wsl.md) |
+
+Release zip for this platform: **`app-timezone-launchers-<version>-windows.zip`** (name and extracted folder both include `-windows`).
+
+macOS app zip remains **`ZoneLaunch-<version>-macos.zip`**.
+
+Overview: [docs/windows/overview.md](docs/windows/overview.md).
+
+---
+
+## ZoneLaunch app (macOS GUI, optional)
+
+Prebuilt **ad-hoc signed** builds are on GitHub Releases (no paid Apple Developer account, **not notarized**). Asset name ends with **`-macos`**.
 
 - **Download:** https://github.com/jawQ/app-timezone-launchers/releases/latest  
 - **Full install + Gatekeeper guide:** [Install from Releases](docs/app/install-from-release.md)  
@@ -143,9 +166,12 @@ Later launches work normally. Full guide and alternatives (`xattr`, right-click 
 
 | Module | Contents |
 | --- | --- |
-| [Optional launchers](docs/scripts/optional-launchers.md) | Slack / LINE scripts |
+| [Optional launchers](docs/scripts/optional-launchers.md) | Slack / LINE scripts (macOS) |
 | [Regional references](docs/scripts/regional-references.md) | Common time zones by region |
-| [App overview](docs/app/overview.md) | Scripts vs GUI |
+| [Windows overview](docs/windows/overview.md) | CMD / PowerShell / WSL |
+| [Windows install](docs/windows/install.md) | Native + Release zip |
+| [WSL](docs/windows/wsl.md) | VS Code, Docker, interop |
+| [App overview](docs/app/overview.md) | Scripts vs GUI (macOS) |
 | [Install app from Releases](docs/app/install-from-release.md) | Download zip, Gatekeeper |
 | [Build app from source](docs/app/build-from-source.md) | Local build / package |
 | [Publishing releases](docs/app/releasing.md) | Maintainer: `npm run release:tag` |

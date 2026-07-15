@@ -1,0 +1,96 @@
+#!/usr/bin/env bash
+# Run any command with TZ set for that process tree only (WSL / Linux side).
+# Does not change the Windows or WSL "system" default beyond this invocation.
+#
+# Usage:
+#   run-with-tz Asia/Shanghai date
+#   run-with-tz America/Los_Angeles code .
+#   RUN_TZ=Asia/Tokyo run-with-tz -- docker run --rm alpine date
+#   RUN_TZ=Asia/Shanghai run-with-tz date
+#   run-with-tz Asia/Shanghai -- docker run --rm -e TZ=Asia/Shanghai alpine date
+#
+# Notes:
+#   - For Docker *containers*, prefer also passing -e TZ=... into the container
+#     (or Compose environment). This wrapper only sets TZ for the docker CLI
+#     process unless you pass -e yourself.
+#   - For Windows-native GUI apps (Feishu/WeChat .exe), use feishu-tz / wechat-tz
+#     in this directory (interop) or the native windows\bin launchers.
+#   - When RUN_TZ is set, an IANA-looking first arg still overrides it; a
+#     non-IANA first arg is treated as the command (so -- is optional).
+
+set -euo pipefail
+
+usage() {
+  cat <<'EOF'
+Usage:
+  run-with-tz <IANA_TZ> <command> [args...]
+  run-with-tz <IANA_TZ> -- <command> [args...]
+  RUN_TZ=<IANA_TZ> run-with-tz -- <command> [args...]
+  RUN_TZ=<IANA_TZ> run-with-tz <command> [args...]
+
+When RUN_TZ is set, pass -- before the command if you prefer, or omit -- when
+the first argument is not an IANA id (ids usually look like Area/Location).
+An explicit IANA first argument always overrides RUN_TZ.
+
+Examples:
+  run-with-tz Asia/Shanghai date
+  run-with-tz America/Los_Angeles code .
+  RUN_TZ=Asia/Tokyo run-with-tz -- node server.js
+  RUN_TZ=Asia/Shanghai run-with-tz date
+  run-with-tz Asia/Shanghai -- docker run --rm -e TZ=Asia/Shanghai alpine date
+EOF
+}
+
+# True for common IANA tokens: Area/Location, UTC, GMT, GMT±N.
+is_iana_tz_token() {
+  local t="${1:-}"
+  [[ -z "$t" ]] && return 1
+  case "$t" in
+    */*) return 0 ;;
+    [Uu][Tt][Cc]) return 0 ;;
+    [Gg][Mm][Tt]) return 0 ;;
+    [Gg][Mm][Tt][+-]*) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
+  usage
+  exit 0
+fi
+
+TZ_VALUE="${RUN_TZ:-}"
+
+if [[ "${1:-}" == "--" ]]; then
+  shift
+elif [[ -n "${1:-}" ]]; then
+  if is_iana_tz_token "$1"; then
+    # Explicit IANA first arg always wins over RUN_TZ.
+    TZ_VALUE="$1"
+    shift
+  elif [[ -z "$TZ_VALUE" ]]; then
+    # No RUN_TZ: first arg is the time zone (historical form).
+    TZ_VALUE="$1"
+    shift
+  fi
+  # else: RUN_TZ set and first arg is not IANA-like → treat as command.
+fi
+
+if [[ "${1:-}" == "--" ]]; then
+  shift
+fi
+
+if [[ -z "$TZ_VALUE" ]]; then
+  echo "Missing time zone. Pass IANA id or set RUN_TZ." >&2
+  usage >&2
+  exit 1
+fi
+
+if [[ $# -lt 1 ]]; then
+  echo "Missing command to run." >&2
+  usage >&2
+  exit 1
+fi
+
+export TZ="$TZ_VALUE"
+exec "$@"

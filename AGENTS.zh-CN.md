@@ -4,25 +4,38 @@
 
 ## 项目结构与模块组织
 
-根目录的 `bin/` 包含 `feishu-tz`、`wechat-tz` 等 shell 启动命令；`install.sh`
-会将它们安装到用户指定的前缀目录。面向用户的文档位于 `README.md` / `README.zh-CN.md`
-与分模块的 `docs/`：
+根目录的 `bin/` 包含 **macOS** 的 `feishu-tz`、`wechat-tz` 等 shell 启动命令；`install.sh`
+会将它们安装到用户指定前缀（**仅 Darwin**）。面向用户的文档位于 `README.md` /
+`README.zh-CN.md` 与分模块的 `docs/`：
 
-- `docs/scripts/` — shell 启动命令（主路径、最轻量）
-- `docs/app/` — ZoneLaunch 图形界面（可选、体验更好）
+- `docs/scripts/` — macOS shell 启动命令（Mac 上主路径、最轻量）
+- `docs/app/` — macOS ZoneLaunch 图形界面（可选、体验更好）
+- `docs/windows/` — Windows 原生（CMD/PowerShell）+ WSL 辅助
 - `docs/superpowers/` 与 `.superpowers/` — 仅内部 agent/设计笔记（已 gitignore）
 
-原生 App 是位于 `macos/AppTimezoneLauncher/` 的 Swift Package。将可复用的非 UI
+**Windows** 代码只放在 `windows/`（不要并入 macOS 路径）：
+
+- `windows/bin/` — PowerShell + CMD 启动器
+- `windows/install.ps1` — 原生安装
+- `windows/wsl/` — WSL bash 辅助（`run-with-tz`、`code-tz`、`docker-tz`、Win 应用互通）
+- `windows/scripts/package-scripts.sh` — 产出 `app-timezone-launchers-<ver>-windows.zip`
+
+原生 macOS App 是位于 `macos/AppTimezoneLauncher/` 的 Swift Package。将可复用的非 UI
 逻辑放在 `Sources/AppTimezoneLauncherCore/`；SwiftUI 页面和 ViewModel 放在
 `Sources/AppTimezoneLauncher/`。测试位于 `Tests/AppTimezoneLauncherTests/`，图标源文件
 和生成资源位于 `Resources/`。不要编辑 `.build/` 或 `build/`，两者均为已忽略的生成目录。
 Release zip 输出到 `dist/`（同样已忽略）。
 
-### GitHub Releases（App zip，无需付费苹果账号）
+### GitHub Releases（资源必须标注平台）
 
-推送匹配 `v*` 的 tag 会在 `macos-latest` 上运行 `.github/workflows/release-macos-app.yml`：
-测试、`package-release.sh`，并上传 `ZoneLaunch-<version>-macos.zip` 与 `SHA256SUMS`。
-构建仅为 **ad-hoc 签名**（无 Developer ID / 公证）。
+推送匹配 `v*` 的 tag 会触发 `.github/workflows/release-macos-app.yml` 的三个 Job：
+macOS 与 Windows 并行构建，然后由唯一 Release Job 校验并上传全部资源。
+macOS 构建仅为 **ad-hoc 签名**（无 Developer ID / 公证）。
+
+**每个可下载资源或解压顶层目录名必须带平台后缀**（`-macos`、`-windows`，以及将来的
+`-wsl` / Windows GUI 命名）。禁止发布无平台标注的 `ZoneLaunch.zip`。Windows 脚本包：
+`npm run release:package:windows` → `app-timezone-launchers-<version>-windows.zip`；Windows CLI
+产物还会带平台和架构后缀（`ZoneLaunch-cli-<version>-windows-amd64.zip` / `-arm64.zip`）。
 
 完整维护者说明：[`docs/app/releasing.zh-CN.md`](docs/app/releasing.zh-CN.md)（[English](docs/app/releasing.md)）。
 

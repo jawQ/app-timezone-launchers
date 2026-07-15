@@ -86,7 +86,10 @@ Tags must look like `v1.2.3` (three numeric parts). The workflow matches `v*`.
 ## What gets published
 
 - `ZoneLaunch-<version>-macos.zip` — ad-hoc signed app + `README-FIRST.txt`
-- `SHA256SUMS`
+- `app-timezone-launchers-<version>-windows.zip` — native CMD/PowerShell launchers + WSL helpers
+- `ZoneLaunch-cli-<version>-windows-amd64.zip` — Windows CLI for Intel/AMD PCs
+- `ZoneLaunch-cli-<version>-windows-arm64.zip` — Windows CLI for ARM/Snapdragon PCs
+- `SHA256SUMS` — checksums for all four platform archives
 - **Release notes (always both languages)**
   - English: Release page body (`RELEASE_NOTES.md`)
   - Chinese: top **[中文 →]** opens `docs/release-notes/vX.Y.Z-zh.md` on GitHub; `RELEASE_NOTES.zh-CN.md` remains a download asset

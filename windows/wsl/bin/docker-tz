@@ -1,0 +1,70 @@
+#!/usr/bin/env bash
+# Docker helper for WSL: run docker with TZ on the CLI process, and document
+# common patterns for container-level time zones.
+#
+# Usage:
+#   docker-tz version
+#   docker-tz run --rm -e TZ=Asia/Shanghai alpine date
+#   DOCKER_TZ=America/Los_Angeles docker-tz compose up
+#
+# Important:
+#   - Setting TZ only on the docker *CLI* does not change time inside a
+#     container. Prefer: docker run -e TZ=IANA ... or Compose `environment`.
+#   - This wrapper sets TZ for the docker client process (and can inject a
+#     default -e TZ= for plain `docker run` when DOCKER_INJECT_TZ=1).
+
+set -euo pipefail
+
+DOCKER_TZ="${DOCKER_TZ:-Asia/Shanghai}"
+DOCKER_BIN="${DOCKER_BIN:-docker}"
+DOCKER_INJECT_TZ="${DOCKER_INJECT_TZ:-0}"
+
+if ! command -v "$DOCKER_BIN" >/dev/null 2>&1; then
+  echo "Command not found: $DOCKER_BIN" >&2
+  echo "Install Docker (Docker Desktop WSL integration or engine) first." >&2
+  exit 1
+fi
+
+export TZ="$DOCKER_TZ"
+
+has_container_tz() {
+  local arg next index
+  local -a args=("$@")
+
+  for ((index = 0; index < ${#args[@]}; index++)); do
+    arg="${args[index]}"
+    case "$arg" in
+      -e|--env)
+        if (( index + 1 < ${#args[@]} )); then
+          next="${args[index + 1]}"
+          if [[ "$next" == "TZ" || "$next" == TZ=* ]]; then
+            return 0
+          fi
+          index=$((index + 1))
+        fi
+        ;;
+      -e=TZ|-e=TZ=*|-eTZ|-eTZ=*|--env=TZ|--env=TZ=*)
+        return 0
+        ;;
+    esac
+  done
+
+  return 1
+}
+
+if [[ "${DOCKER_INJECT_TZ}" == "1" && "${1:-}" == "run" ]]; then
+  shift
+  # Insert -e TZ= after `run` and before image/command if user did not pass TZ.
+  if ! has_container_tz "$@"; then
+    echo "Starting $DOCKER_BIN run with CLI TZ=$DOCKER_TZ and container -e TZ=$DOCKER_TZ"
+    exec "$DOCKER_BIN" run -e "TZ=$DOCKER_TZ" "$@"
+  fi
+  echo "Starting $DOCKER_BIN run with CLI TZ=$DOCKER_TZ"
+  exec "$DOCKER_BIN" run "$@"
+fi
+
+echo "Starting $DOCKER_BIN with CLI TZ=$DOCKER_TZ"
+if [[ "${1:-}" == "run" ]]; then
+  echo "Hint: pass -e TZ=$DOCKER_TZ into the container, or DOCKER_INJECT_TZ=1 docker-tz run ..." >&2
+fi
+exec "$DOCKER_BIN" "$@"

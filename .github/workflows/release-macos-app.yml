@@ -1,5 +1,5 @@
-# Publish an ad-hoc signed ZoneLaunch.app zip on each version tag.
-# No Apple Developer Program membership required.
+# Build platform-labeled macOS and Windows assets, then publish one GitHub Release.
+# macOS builds are ad-hoc signed only; no Apple Developer Program membership required.
 name: Release ZoneLaunch
 
 on:
@@ -8,30 +8,31 @@ on:
       - "v*"
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
-  release:
-    name: Build and upload macOS app
+  build-macos:
+    name: Build macOS app
     runs-on: macos-latest
+    outputs:
+      tag: ${{ steps.version.outputs.tag }}
+      version: ${{ steps.version.outputs.version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          # Need full history + tags for bilingual changelog (prev tag → this tag).
-          fetch-depth: 0
 
       - name: Resolve version from tag
         id: version
         run: |
           TAG="${GITHUB_REF_NAME}"
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Release tag must match vX.Y.Z: $TAG" >&2
+            exit 1
+          fi
           VERSION="${TAG#v}"
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "Packaging version $VERSION (tag $TAG)"
-
-      - name: Fetch tags
-        run: git fetch --force --tags origin
 
       - name: Swift tests
         working-directory: macos/AppTimezoneLauncher
@@ -43,15 +44,161 @@ jobs:
           ./scripts/test-build-app.sh
           ./scripts/test-install-app.sh
 
-      - name: Package release zip
+      - name: Package macOS release
         env:
           APP_BUILD: ${{ github.run_number }}
         run: |
           ./macos/AppTimezoneLauncher/scripts/package-release.sh "${{ steps.version.outputs.version }}"
 
+      - name: Verify macOS artifacts
+        run: |
+          test -f "dist/ZoneLaunch-${{ steps.version.outputs.version }}-macos.zip"
+          test -f dist/SHA256SUMS
+          (cd dist && shasum -a 256 -c SHA256SUMS)
+          unzip -t "dist/ZoneLaunch-${{ steps.version.outputs.version }}-macos.zip"
+
+      - name: Upload macOS artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-macos
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            dist/ZoneLaunch-${{ steps.version.outputs.version }}-macos.zip
+            dist/SHA256SUMS
+
+  build-windows:
+    name: Build Windows packages
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Go
+        uses: actions/setup-go@v5
+        with:
+          go-version-file: windows/cli/go.mod
+          cache: false
+
+      - name: Resolve version from tag
+        id: version
+        run: |
+          TAG="${GITHUB_REF_NAME}"
+          if [[ ! "$TAG" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Release tag must match vX.Y.Z: $TAG" >&2
+            exit 1
+          fi
+          VERSION="${TAG#v}"
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+          echo "Packaging Windows version $VERSION"
+
+      - name: Test Windows scripts and CLI
+        run: |
+          bash windows/scripts/test-wsl-helpers.sh
+          bash windows/scripts/test-ps-helpers.sh
+          bash windows/scripts/test-package-scripts.sh
+          (cd windows/cli && go test ./...)
+
+      - name: Package Windows scripts and CLI
+        env:
+          ARCHS: amd64 arm64
+        run: |
+          ./windows/scripts/package-scripts.sh "${{ steps.version.outputs.version }}"
+          ./windows/scripts/build-cli.sh "${{ steps.version.outputs.version }}"
+
+      - name: Verify Windows artifacts
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          test -f "dist/app-timezone-launchers-${VERSION}-windows.zip"
+          test -f "dist/ZoneLaunch-cli-${VERSION}-windows-amd64.zip"
+          test -f "dist/ZoneLaunch-cli-${VERSION}-windows-arm64.zip"
+          test -f dist/SHA256SUMS-windows.txt
+          test -f dist/SHA256SUMS-windows-cli.txt
+          (cd dist && sha256sum -c SHA256SUMS-windows.txt)
+          (cd dist && sha256sum -c SHA256SUMS-windows-cli.txt)
+          test "$(wc -l < dist/SHA256SUMS-windows.txt)" -eq 1
+          test "$(wc -l < dist/SHA256SUMS-windows-cli.txt)" -eq 2
+          unzip -t "dist/app-timezone-launchers-${VERSION}-windows.zip"
+          unzip -t "dist/ZoneLaunch-cli-${VERSION}-windows-amd64.zip"
+          unzip -t "dist/ZoneLaunch-cli-${VERSION}-windows-arm64.zip"
+
+      - name: Upload Windows artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-windows
+          if-no-files-found: error
+          retention-days: 7
+          path: |
+            dist/app-timezone-launchers-${{ steps.version.outputs.version }}-windows.zip
+            dist/ZoneLaunch-cli-${{ steps.version.outputs.version }}-windows-amd64.zip
+            dist/ZoneLaunch-cli-${{ steps.version.outputs.version }}-windows-arm64.zip
+            dist/SHA256SUMS-windows.txt
+            dist/SHA256SUMS-windows-cli.txt
+
+  release:
+    name: Publish GitHub Release
+    needs:
+      - build-macos
+      - build-windows
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Need full history + tags for bilingual changelog (prev tag → this tag).
+          fetch-depth: 0
+
+      - name: Fetch tags
+        run: git fetch --force --tags origin
+
+      - name: Download macOS artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-macos
+          path: dist
+
+      - name: Download Windows artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: release-windows
+          path: dist
+
+      - name: Verify release artifacts
+        env:
+          VERSION: ${{ needs.build-macos.outputs.version }}
+        run: |
+          test -f "dist/ZoneLaunch-${VERSION}-macos.zip"
+          test -f "dist/app-timezone-launchers-${VERSION}-windows.zip"
+          test -f "dist/ZoneLaunch-cli-${VERSION}-windows-amd64.zip"
+          test -f "dist/ZoneLaunch-cli-${VERSION}-windows-arm64.zip"
+          test -f dist/SHA256SUMS
+          test -f dist/SHA256SUMS-windows.txt
+          test -f dist/SHA256SUMS-windows-cli.txt
+          (cd dist && sha256sum -c SHA256SUMS)
+          (cd dist && sha256sum -c SHA256SUMS-windows.txt)
+          (cd dist && sha256sum -c SHA256SUMS-windows-cli.txt)
+
+      - name: Generate unified checksums
+        env:
+          VERSION: ${{ needs.build-macos.outputs.version }}
+        run: |
+          (
+            cd dist
+            sha256sum \
+              "ZoneLaunch-${VERSION}-macos.zip" \
+              "app-timezone-launchers-${VERSION}-windows.zip" \
+              "ZoneLaunch-cli-${VERSION}-windows-amd64.zip" \
+              "ZoneLaunch-cli-${VERSION}-windows-arm64.zip" \
+              >SHA256SUMS
+            test "$(wc -l < SHA256SUMS)" -eq 4
+            sha256sum -c SHA256SUMS
+          )
+
       - name: Generate release notes (EN body + ZH full file)
         run: |
-          ./scripts/generate-release-notes.sh "${{ steps.version.outputs.tag }}"
+          ./scripts/generate-release-notes.sh "${{ needs.build-macos.outputs.tag }}"
           test -f dist/RELEASE_NOTES.md
           test -f dist/RELEASE_NOTES.zh-CN.md
           echo "----- ENGLISH (Release body) -----"
@@ -62,12 +209,16 @@ jobs:
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.version.outputs.tag }}
-          name: ZoneLaunch ${{ steps.version.outputs.version }}
+          tag_name: ${{ needs.build-macos.outputs.tag }}
+          name: ZoneLaunch ${{ needs.build-macos.outputs.version }}
           # English body; Chinese is RELEASE_NOTES.zh-CN.md (linked as 中文 entry).
           generate_release_notes: false
+          fail_on_unmatched_files: true
           body_path: dist/RELEASE_NOTES.md
           files: |
-            dist/ZoneLaunch-${{ steps.version.outputs.version }}-macos.zip
+            dist/ZoneLaunch-${{ needs.build-macos.outputs.version }}-macos.zip
+            dist/app-timezone-launchers-${{ needs.build-macos.outputs.version }}-windows.zip
+            dist/ZoneLaunch-cli-${{ needs.build-macos.outputs.version }}-windows-amd64.zip
+            dist/ZoneLaunch-cli-${{ needs.build-macos.outputs.version }}-windows-arm64.zip
             dist/SHA256SUMS
             dist/RELEASE_NOTES.zh-CN.md

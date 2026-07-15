@@ -205,7 +205,10 @@ _Commit subjects are shown as recorded in git (may be Chinese or English)._
 **Assets**
 
 - \`ZoneLaunch-${version}-macos.zip\` — \`ZoneLaunch.app\` + \`README-FIRST.txt\` (ad-hoc signed, **not notarized**)
-- \`SHA256SUMS\` — checksum
+- \`app-timezone-launchers-${version}-windows.zip\` — native Windows launchers + WSL helpers
+- \`ZoneLaunch-cli-${version}-windows-amd64.zip\` — Windows CLI for Intel/AMD PCs
+- \`ZoneLaunch-cli-${version}-windows-arm64.zip\` — Windows CLI for ARM/Snapdragon PCs
+- \`SHA256SUMS\` — checksums for all platform archives
 - \`RELEASE_NOTES.zh-CN.md\` — full release notes in Chinese
 
 **Install**
@@ -213,6 +216,8 @@ _Commit subjects are shown as recorded in git (may be Chinese or English)._
 1. Unzip and drag **ZoneLaunch.app** into Applications.
 2. First open is often blocked by Gatekeeper: **Done**, then **System Settings → Privacy & Security → Open Anyway**.
 3. Guide with screenshots: [Install from Releases](https://github.com/$(repo_slug)/blob/master/docs/app/install-from-release.md)
+
+Windows installation: [Install on Windows](https://github.com/$(repo_slug)/blob/master/docs/windows/install.md)
 
 **Lighter path: shell launchers**
 
@@ -257,7 +262,10 @@ ${body}
 **Assets**
 
 - \`ZoneLaunch-${version}-macos.zip\` — \`ZoneLaunch.app\` + \`README-FIRST.txt\` (ad-hoc signed, **not notarized**)
-- \`SHA256SUMS\` — checksum
+- \`app-timezone-launchers-${version}-windows.zip\` — native Windows launchers + WSL helpers
+- \`ZoneLaunch-cli-${version}-windows-amd64.zip\` — Windows CLI for Intel/AMD PCs
+- \`ZoneLaunch-cli-${version}-windows-arm64.zip\` — Windows CLI for ARM/Snapdragon PCs
+- \`SHA256SUMS\` — checksums for all platform archives
 - \`RELEASE_NOTES.zh-CN.md\` — full release notes in Chinese
 
 **Install**
@@ -265,6 +273,8 @@ ${body}
 1. Unzip and drag **ZoneLaunch.app** into Applications.
 2. First open is often blocked by Gatekeeper: **Done**, then **System Settings → Privacy & Security → Open Anyway**.
 3. Guide with screenshots: [Install from Releases](https://github.com/$(repo_slug)/blob/master/docs/app/install-from-release.md)
+
+Windows installation: [Install on Windows](https://github.com/$(repo_slug)/blob/master/docs/windows/install.md)
 
 **Lighter path: shell launchers**
 
@@ -330,7 +340,10 @@ _提交说明保持 git 原文（可能为中文或英文）。_
 **资源**
 
 - \`ZoneLaunch-${version}-macos.zip\` — \`ZoneLaunch.app\` + \`README-FIRST.txt\`（ad-hoc 签名，**未公证**）
-- \`SHA256SUMS\` — 校验和
+- \`app-timezone-launchers-${version}-windows.zip\` — Windows 原生启动器 + WSL 辅助
+- \`ZoneLaunch-cli-${version}-windows-amd64.zip\` — Intel/AMD Windows CLI
+- \`ZoneLaunch-cli-${version}-windows-arm64.zip\` — ARM/骁龙 Windows CLI
+- \`SHA256SUMS\` — 全部平台压缩包的统一校验和
 - \`RELEASE_NOTES.md\` — 英文版更新说明（GitHub Release 默认展示）
 
 **安装步骤**
@@ -338,6 +351,8 @@ _提交说明保持 git 原文（可能为中文或英文）。_
 1. 解压后将 **ZoneLaunch.app** 拖到「应用程序」。
 2. 首次打开常被门禁拦截：点 **Done / 完成**，再到 **系统设置 → 隐私与安全性 → Open Anyway / 仍要打开**。
 3. 图文说明：[从 Release 安装](https://github.com/$(repo_slug)/blob/master/docs/app/install-from-release.zh-CN.md)
+
+Windows 安装：[Windows 安装指南](https://github.com/$(repo_slug)/blob/master/docs/windows/install.zh-CN.md)
 
 **更轻量：Shell 启动命令**
 
