@@ -148,6 +148,12 @@ final class AppChromeController {
     closeInterceptor.allowRealClose = true
   }
 
+  /// Lets Sparkle close the current UI before atomically replacing and relaunching the app.
+  func prepareForUpdaterRelaunch() {
+    prepareForTermination()
+    dismissAttachedSheets()
+  }
+
   /// Windows with an attached sheet refuse to close, which cancels `terminate`.
   private func dismissAttachedSheets() {
     for window in NSApp.windows {

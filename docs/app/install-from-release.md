@@ -20,7 +20,7 @@ Download a prebuilt **ZoneLaunch.app** without cloning the repo or installing Xc
 # Example after downloading to ~/Downloads
 cd ~/Downloads
 unzip ZoneLaunch-*-macos.zip
-# You should see ZoneLaunch.app (and a short README-FIRST.txt)
+# You should see ZoneLaunch.app
 ```
 
 Then either:
@@ -86,7 +86,9 @@ Only if the project later ships with **Developer ID** signing + **notarization**
 
 ## After upgrading
 
-Replace `/Applications/ZoneLaunch.app` with the new build. Prefer one install path only so you do not get two Dock icons.
+Starting with the first Sparkle-enabled release, ZoneLaunch checks for updates daily. When a newer release is available, a small blue update button appears in the main-window toolbar. Click it once to download the Ed25519-signed archive; after verification and installation, ZoneLaunch restarts automatically.
+
+Users on an older build without the updater must replace `/Applications/ZoneLaunch.app` manually one last time. Prefer one install path only so you do not get two Dock icons.
 
 If you previously installed from source with `./scripts/install-app.sh`, that script also cleans legacy Bundle IDs and duplicate registrations. For zip installs, removing the old app before moving the new one is enough in most cases.
 

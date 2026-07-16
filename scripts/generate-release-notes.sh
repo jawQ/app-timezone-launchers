@@ -204,7 +204,8 @@ _Commit subjects are shown as recorded in git (may be Chinese or English)._
 
 **Assets**
 
-- \`ZoneLaunch-${version}-macos.zip\` — \`ZoneLaunch.app\` + \`README-FIRST.txt\` (ad-hoc signed, **not notarized**)
+- \`ZoneLaunch-${version}-macos.zip\` — \`ZoneLaunch.app\` (ad-hoc signed, **not notarized**; also used by in-app updates)
+- \`appcast-macos.xml\` — signed Sparkle update feed for macOS
 - \`app-timezone-launchers-${version}-windows.zip\` — native Windows launchers + WSL helpers
 - \`ZoneLaunch-cli-${version}-windows-amd64.zip\` — Windows CLI for Intel/AMD PCs
 - \`ZoneLaunch-cli-${version}-windows-arm64.zip\` — Windows CLI for ARM/Snapdragon PCs
@@ -261,7 +262,8 @@ ${body}
 
 **Assets**
 
-- \`ZoneLaunch-${version}-macos.zip\` — \`ZoneLaunch.app\` + \`README-FIRST.txt\` (ad-hoc signed, **not notarized**)
+- \`ZoneLaunch-${version}-macos.zip\` — \`ZoneLaunch.app\` (ad-hoc signed, **not notarized**; also used by in-app updates)
+- \`appcast-macos.xml\` — signed Sparkle update feed for macOS
 - \`app-timezone-launchers-${version}-windows.zip\` — native Windows launchers + WSL helpers
 - \`ZoneLaunch-cli-${version}-windows-amd64.zip\` — Windows CLI for Intel/AMD PCs
 - \`ZoneLaunch-cli-${version}-windows-arm64.zip\` — Windows CLI for ARM/Snapdragon PCs
@@ -339,7 +341,8 @@ _提交说明保持 git 原文（可能为中文或英文）。_
 
 **资源**
 
-- \`ZoneLaunch-${version}-macos.zip\` — \`ZoneLaunch.app\` + \`README-FIRST.txt\`（ad-hoc 签名，**未公证**）
+- \`ZoneLaunch-${version}-macos.zip\` — \`ZoneLaunch.app\`（ad-hoc 签名，**未公证**，同时供应用内更新使用）
+- \`appcast-macos.xml\` — macOS 的 Sparkle 签名更新源
 - \`app-timezone-launchers-${version}-windows.zip\` — Windows 原生启动器 + WSL 辅助
 - \`ZoneLaunch-cli-${version}-windows-amd64.zip\` — Intel/AMD Windows CLI
 - \`ZoneLaunch-cli-${version}-windows-arm64.zip\` — ARM/骁龙 Windows CLI

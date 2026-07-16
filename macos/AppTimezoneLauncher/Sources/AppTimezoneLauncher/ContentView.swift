@@ -1,10 +1,12 @@
 import AppKit
 import AppTimezoneLauncherCore
+import Combine
 import SwiftUI
 
 struct ContentView: View {
   @StateObject private var model = LauncherViewModel()
   @EnvironmentObject private var appSettings: AppSettingsStore
+  @EnvironmentObject private var updates: UpdateCoordinator
   @State private var timezoneSheet: TimezoneGroupSheetMode?
   @State private var groupPendingDeletion: TimezoneGroup?
   @State private var groupPendingLaunchAll: TimezoneGroup?
@@ -45,6 +47,11 @@ struct ContentView: View {
     }
     .background(Color(nsColor: .windowBackgroundColor))
     .toolbar {
+      if updates.state.isVisible {
+        ToolbarItem {
+          UpdateToolbarButton(coordinator: updates)
+        }
+      }
       ToolbarItem {
         Button {
           timezoneSheet = .add
@@ -89,6 +96,23 @@ struct ContentView: View {
       }
     } message: {
       Text(model.alertMessage ?? "")
+    }
+    .alert(
+      "更新失败",
+      isPresented: Binding(
+        get: { updates.errorMessage != nil },
+        set: { if !$0 { updates.errorMessage = nil } }
+      )
+    ) {
+      Button("取消", role: .cancel) {
+        updates.errorMessage = nil
+      }
+      Button("重试") {
+        updates.errorMessage = nil
+        updates.installOrRetry()
+      }
+    } message: {
+      Text(updates.errorMessage ?? "无法完成更新，请稍后重试。")
     }
     .alert(
       "Delete Time Zone?",

@@ -21,7 +21,7 @@
 # 假设 zip 在 ~/Downloads
 cd ~/Downloads
 unzip ZoneLaunch-*-macos.zip
-# 应看到 ZoneLaunch.app（以及简短的 README-FIRST.txt）
+# 应看到 ZoneLaunch.app
 ```
 
 然后任选其一：
@@ -88,7 +88,9 @@ open /Applications/ZoneLaunch.app
 
 ## 升级
 
-用新版本替换 `/Applications/ZoneLaunch.app`。尽量只保留一个安装路径，避免 Dock 出现两个图标。
+从首个接入 Sparkle 的版本开始，ZoneLaunch 每天检查一次更新。有新版本时，主窗口工具栏会出现蓝色小更新按钮；点击一次即可下载经 Ed25519 签名的压缩包，校验和安装完成后会自动重启。
+
+仍在使用不含更新器的旧版本时，需要最后手动替换一次 `/Applications/ZoneLaunch.app`。尽量只保留一个安装路径，避免 Dock 出现两个图标。
 
 若你曾用源码里的 `./scripts/install-app.sh` 安装，该脚本还会清理历史 Bundle ID 与重复注册。纯 zip 安装时，先删旧再移入新版本通常即可。
 

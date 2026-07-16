@@ -15,15 +15,21 @@ LEGACY_APP_BUNDLE="$PROJECT_DIR/build/$APP_NAME.app"
 CONTENTS_DIR="$APP_BUNDLE/Contents"
 MACOS_DIR="$CONTENTS_DIR/MacOS"
 RESOURCES_DIR="$CONTENTS_DIR/Resources"
+FRAMEWORKS_DIR="$CONTENTS_DIR/Frameworks"
 
 cd "$PROJECT_DIR"
 swift build -c release
+BIN_DIR="$(swift build -c release --show-bin-path)"
+SPARKLE_FRAMEWORK="$BIN_DIR/Sparkle.framework"
 
 rm -rf "$LEGACY_APP_BUNDLE" "$APP_BUNDLE"
-mkdir -p "$MACOS_DIR" "$RESOURCES_DIR"
+mkdir -p "$MACOS_DIR" "$RESOURCES_DIR" "$FRAMEWORKS_DIR"
 
-cp "$PROJECT_DIR/.build/release/$BINARY_NAME" "$MACOS_DIR/$BINARY_NAME"
+cp "$BIN_DIR/$BINARY_NAME" "$MACOS_DIR/$BINARY_NAME"
 cp "$PROJECT_DIR/Resources/AppIcon.icns" "$RESOURCES_DIR/AppIcon.icns"
+test -d "$SPARKLE_FRAMEWORK"
+ditto "$SPARKLE_FRAMEWORK" "$FRAMEWORKS_DIR/Sparkle.framework"
+install_name_tool -add_rpath "@executable_path/../Frameworks" "$MACOS_DIR/$BINARY_NAME"
 
 cat >"$CONTENTS_DIR/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
@@ -53,6 +59,22 @@ cat >"$CONTENTS_DIR/Info.plist" <<PLIST
   <key>LSUIElement</key>
   <true/>
   <key>NSHighResolutionCapable</key>
+  <true/>
+  <key>SUAllowsAutomaticUpdates</key>
+  <false/>
+  <key>SUAutomaticallyUpdate</key>
+  <false/>
+  <key>SUEnableAutomaticChecks</key>
+  <true/>
+  <key>SUFeedURL</key>
+  <string>$SPARKLE_FEED_URL</string>
+  <key>SUPublicEDKey</key>
+  <string>$SPARKLE_PUBLIC_ED_KEY</string>
+  <key>SUScheduledCheckInterval</key>
+  <integer>86400</integer>
+  <key>SUSendProfileInfo</key>
+  <false/>
+  <key>SUVerifyUpdateBeforeExtraction</key>
   <true/>
 </dict>
 </plist>

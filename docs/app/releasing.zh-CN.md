@@ -11,6 +11,18 @@
 3. **工作区干净**（`git status` 无改动）。
 4. 当前分支为 **`master`**。
 5. **`HEAD` 与 `origin/master` 一致**（本地有提交时先 `git push origin master`）。
+6. 仓库 Actions Secret **`SPARKLE_ED25519_PRIVATE_KEY`** 已保存 `app.zonelaunch.launcher` 对应的 Sparkle 私钥。
+
+更新签名密钥只需配置一次（公钥已写入 App）：
+
+```bash
+cd macos/AppTimezoneLauncher
+key_file="$(mktemp)"
+.build/artifacts/sparkle/Sparkle/bin/generate_keys \
+  --account app.zonelaunch.launcher -x "$key_file"
+gh secret set SPARKLE_ED25519_PRIVATE_KEY <"$key_file"
+rm -f "$key_file"
+```
 
 推送 tag `vX.Y.Z` 会触发 [`.github/workflows/release-macos-app.yml`](../../.github/workflows/release-macos-app.yml)：跑测试、打包 zip、上传资产。
 
@@ -85,7 +97,8 @@ tag 必须是 `v1.2.3` 这种三段数字。workflow 匹配 `v*`。
 
 ## 会发布什么
 
-- `ZoneLaunch-<version>-macos.zip` — ad-hoc 签名的 App + `README-FIRST.txt`
+- `ZoneLaunch-<version>-macos.zip` — ad-hoc 签名的 App，同时供应用内更新使用
+- `appcast-macos.xml` — 含 macOS 压缩包 Ed25519 签名的 Sparkle 更新源
 - `app-timezone-launchers-<version>-windows.zip` — Windows 原生 CMD/PowerShell 启动器 + WSL 辅助
 - `ZoneLaunch-cli-<version>-windows-amd64.zip` — Intel/AMD Windows CLI
 - `ZoneLaunch-cli-<version>-windows-arm64.zip` — ARM/骁龙 Windows CLI

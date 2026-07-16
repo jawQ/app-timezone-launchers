@@ -50,12 +50,26 @@ jobs:
         run: |
           ./macos/AppTimezoneLauncher/scripts/package-release.sh "${{ steps.version.outputs.version }}"
 
+      - name: Generate signed Sparkle appcast
+        env:
+          SPARKLE_ED25519_PRIVATE_KEY: ${{ secrets.SPARKLE_ED25519_PRIVATE_KEY }}
+        run: |
+          test -n "$SPARKLE_ED25519_PRIVATE_KEY" || {
+            echo "Missing repository secret: SPARKLE_ED25519_PRIVATE_KEY" >&2
+            exit 1
+          }
+          ./macos/AppTimezoneLauncher/scripts/generate-appcast.sh "${{ steps.version.outputs.version }}"
+
       - name: Verify macOS artifacts
         run: |
           test -f "dist/ZoneLaunch-${{ steps.version.outputs.version }}-macos.zip"
+          test -f dist/appcast-macos.xml
           test -f dist/SHA256SUMS
           (cd dist && shasum -a 256 -c SHA256SUMS)
           unzip -t "dist/ZoneLaunch-${{ steps.version.outputs.version }}-macos.zip"
+          xmllint --noout dist/appcast-macos.xml
+          grep -Fq 'sparkle:edSignature=' dist/appcast-macos.xml
+          grep -Fq "ZoneLaunch-${{ steps.version.outputs.version }}-macos.zip" dist/appcast-macos.xml
 
       - name: Upload macOS artifacts
         uses: actions/upload-artifact@v4
@@ -65,6 +79,7 @@ jobs:
           retention-days: 7
           path: |
             dist/ZoneLaunch-${{ steps.version.outputs.version }}-macos.zip
+            dist/appcast-macos.xml
             dist/SHA256SUMS
 
   build-windows:
@@ -170,6 +185,7 @@ jobs:
           VERSION: ${{ needs.build-macos.outputs.version }}
         run: |
           test -f "dist/ZoneLaunch-${VERSION}-macos.zip"
+          test -f dist/appcast-macos.xml
           test -f "dist/app-timezone-launchers-${VERSION}-windows.zip"
           test -f "dist/ZoneLaunch-cli-${VERSION}-windows-amd64.zip"
           test -f "dist/ZoneLaunch-cli-${VERSION}-windows-arm64.zip"
@@ -179,6 +195,8 @@ jobs:
           (cd dist && sha256sum -c SHA256SUMS)
           (cd dist && sha256sum -c SHA256SUMS-windows.txt)
           (cd dist && sha256sum -c SHA256SUMS-windows-cli.txt)
+          grep -Fq 'sparkle:edSignature=' dist/appcast-macos.xml
+          grep -Fq "ZoneLaunch-${VERSION}-macos.zip" dist/appcast-macos.xml
 
       - name: Generate unified checksums
         env:
@@ -218,6 +236,7 @@ jobs:
           body_path: dist/RELEASE_NOTES.md
           files: |
             dist/ZoneLaunch-${{ needs.build-macos.outputs.version }}-macos.zip
+            dist/appcast-macos.xml
             dist/app-timezone-launchers-${{ needs.build-macos.outputs.version }}-windows.zip
             dist/ZoneLaunch-cli-${{ needs.build-macos.outputs.version }}-windows-amd64.zip
             dist/ZoneLaunch-cli-${{ needs.build-macos.outputs.version }}-windows-arm64.zip

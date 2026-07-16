@@ -25,6 +25,7 @@ Both approaches inject `TZ` into the **new** process only. They can be installed
 - Create / rename / delete groups (IANA time zones)
 - Launch with one click
 - Put the same app in several groups when you need different zones
+- Show a blue toolbar button for signed in-app updates, then restart automatically after installation
 
 ## Limits (same as scripts)
 

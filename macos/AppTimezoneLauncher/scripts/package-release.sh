@@ -52,13 +52,13 @@ fi
 
 APP_BUILD="${APP_BUILD:-${GITHUB_RUN_NUMBER:-1}}"
 DIST_DIR="${DIST_DIR:-$REPO_ROOT/dist}"
-STAGE_DIR="$(mktemp -d "${TMPDIR:-/tmp}/ZoneLaunch-release.XXXXXX")"
 ZIP_NAME="ZoneLaunch-${VERSION}-macos.zip"
 ZIP_PATH="$DIST_DIR/$ZIP_NAME"
 APP_BUNDLE="$PROJECT_DIR/.build/app/$APP_NAME.app"
+VERIFY_DIR="$(mktemp -d "${TMPDIR:-/tmp}/ZoneLaunch-release-verify.XXXXXX")"
 
 cleanup() {
-  rm -rf "$STAGE_DIR"
+  rm -rf "$VERIFY_DIR"
 }
 trap cleanup EXIT
 
@@ -81,34 +81,17 @@ if [[ "$built_ver" != "$VERSION" ]]; then
 fi
 codesign --verify --deep --strict "$APP_BUNDLE"
 
-mkdir -p "$DIST_DIR" "$STAGE_DIR"
+mkdir -p "$DIST_DIR"
 rm -f "$ZIP_PATH"
-ditto "$APP_BUNDLE" "$STAGE_DIR/$APP_NAME.app"
 
-cat >"$STAGE_DIR/README-FIRST.txt" <<EOF
-ZoneLaunch ${VERSION}
-====================
+# Sparkle requires framework symlinks and executable bits to survive archiving.
+# Keep the release archive app-only so the same asset works for manual and in-app updates.
+ditto -c -k --sequesterRsrc --keepParent "$APP_BUNDLE" "$ZIP_PATH"
 
-1. Drag ZoneLaunch.app into Applications (or replace the existing copy).
-
-2. First open is BLOCKED by macOS (expected — ad-hoc sign, not notarized):
-   - Double-click → dialog “ZoneLaunch Not Opened” → click Done (not Move to Trash).
-   - System Settings → Privacy & Security → “ZoneLaunch was blocked…” → Open Anyway.
-   - Screenshots + full guide:
-     https://github.com/jawQ/app-timezone-launchers/blob/master/docs/app/install-from-release.md
-
-3. Bundle ID: ${CANONICAL_BUNDLE_ID}
-
-Shell launchers (lighter) still live in the same repository:
-  ./install.sh
-EOF
-
-# Zip app + readme (no __MACOSX noise; no extra parent folder).
-(
-  cd "$STAGE_DIR"
-  export COPYFILE_DISABLE=1
-  zip -qry "$ZIP_PATH" "$APP_NAME.app" README-FIRST.txt
-)
+# Verify the exact archive Sparkle and manual installers will consume.
+ditto -x -k "$ZIP_PATH" "$VERIFY_DIR"
+test -L "$VERIFY_DIR/$APP_NAME.app/Contents/Frameworks/Sparkle.framework/Versions/Current"
+codesign --verify --deep --strict "$VERIFY_DIR/$APP_NAME.app"
 
 (
   cd "$DIST_DIR"

@@ -5,12 +5,14 @@ import SwiftUI
 struct AppTimezoneLauncherApp: App {
   @NSApplicationDelegateAdaptor(AppDelegate.self) private var appDelegate
   @StateObject private var settings = AppSettingsStore()
+  @StateObject private var updates = UpdateCoordinator()
 
   var body: some Scene {
     // Single unique window (not WindowGroup) so openWindow / Dock reopen cannot spawn duplicates.
     Window("ZoneLaunch", id: "main") {
       ContentView()
         .environmentObject(settings)
+        .environmentObject(updates)
         .frame(minWidth: 820, minHeight: 540)
         .preferredColorScheme(colorScheme(for: settings.appearance))
         .background(MainWindowBootstrap())

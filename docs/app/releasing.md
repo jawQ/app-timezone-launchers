@@ -11,6 +11,18 @@ How maintainers cut a GitHub Release from the terminal — no need to use the Gi
 3. **Clean working tree** (`git status` empty).
 4. Branch is **`master`**.
 5. **`HEAD` matches `origin/master`** (commit and `git push origin master` first if you have local commits).
+6. Repository Actions secret **`SPARKLE_ED25519_PRIVATE_KEY`** contains the exported Sparkle key for account `app.zonelaunch.launcher`.
+
+One-time updater-key setup (the public key is already embedded in the app):
+
+```bash
+cd macos/AppTimezoneLauncher
+key_file="$(mktemp)"
+.build/artifacts/sparkle/Sparkle/bin/generate_keys \
+  --account app.zonelaunch.launcher -x "$key_file"
+gh secret set SPARKLE_ED25519_PRIVATE_KEY <"$key_file"
+rm -f "$key_file"
+```
 
 Pushing a tag `vX.Y.Z` triggers [`.github/workflows/release-macos-app.yml`](../../.github/workflows/release-macos-app.yml): Swift tests, package zip, upload assets.
 
@@ -85,7 +97,8 @@ Tags must look like `v1.2.3` (three numeric parts). The workflow matches `v*`.
 
 ## What gets published
 
-- `ZoneLaunch-<version>-macos.zip` — ad-hoc signed app + `README-FIRST.txt`
+- `ZoneLaunch-<version>-macos.zip` — ad-hoc signed app; also used by the in-app updater
+- `appcast-macos.xml` — Sparkle feed with the Ed25519 signature for the macOS archive
 - `app-timezone-launchers-<version>-windows.zip` — native CMD/PowerShell launchers + WSL helpers
 - `ZoneLaunch-cli-<version>-windows-amd64.zip` — Windows CLI for Intel/AMD PCs
 - `ZoneLaunch-cli-<version>-windows-arm64.zip` — Windows CLI for ARM/Snapdragon PCs
