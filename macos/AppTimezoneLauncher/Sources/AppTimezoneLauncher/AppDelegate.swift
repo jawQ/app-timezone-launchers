@@ -11,6 +11,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     // SwiftUI may adjust the activation policy while creating its scenes, so apply
     // the persisted preference again after launch completes.
     applyPersistedSettings()
+
+    // ZoneLaunch is also a menu-bar app, so macOS may finish launching it without
+    // presenting the main window. Wait until SwiftUI has created its scenes, then
+    // make the existing singleton window visible and active.
+    DispatchQueue.main.async {
+      AppChromeController.shared.showMainWindow()
+    }
   }
 
   func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {

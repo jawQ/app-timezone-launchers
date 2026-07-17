@@ -59,6 +59,7 @@ final class AppChromeController {
   var openMainWindow: (() -> Void)?
 
   private let closeInterceptor = MainWindowCloseInterceptor()
+  private var shouldPresentMainWindowWhenReady = false
 
   private init() {}
 
@@ -118,6 +119,8 @@ final class AppChromeController {
   }
 
   func showMainWindow() {
+    // Keep the request alive if SwiftUI has not registered its window yet.
+    shouldPresentMainWindowWhenReady = true
     NSApp.activate(ignoringOtherApps: true)
 
     if let window = preferredMainWindow() {
@@ -132,6 +135,10 @@ final class AppChromeController {
     window.identifier = Self.mainWindowIdentifier
     window.tabbingMode = .disallowed
     closeInterceptor.attach(to: window)
+
+    if shouldPresentMainWindowWhenReady {
+      present(window)
+    }
   }
 
   func quit() {
@@ -164,6 +171,7 @@ final class AppChromeController {
   }
 
   private func present(_ window: NSWindow) {
+    shouldPresentMainWindowWhenReady = false
     window.deminiaturize(nil)
     window.orderFrontRegardless()
     window.makeKeyAndOrderFront(nil)
