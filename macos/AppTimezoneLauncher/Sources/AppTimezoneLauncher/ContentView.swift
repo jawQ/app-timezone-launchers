@@ -11,6 +11,7 @@ struct ContentView: View {
   @State private var groupPendingDeletion: TimezoneGroup?
   @State private var groupPendingLaunchAll: TimezoneGroup?
   @State private var isSettingsPresented = false
+  @State private var isAboutPresented = false
 
   var body: some View {
     HStack(spacing: 0) {
@@ -62,6 +63,14 @@ struct ContentView: View {
       }
       ToolbarItem {
         Button {
+          presentAbout()
+        } label: {
+          Label("关于", systemImage: "info.circle")
+        }
+        .help("查看版本信息并手动检查更新")
+      }
+      ToolbarItem {
+        Button {
           isSettingsPresented = true
         } label: {
           Label("设置", systemImage: "gearshape")
@@ -83,6 +92,20 @@ struct ContentView: View {
     }
     .sheet(isPresented: $isSettingsPresented) {
       SettingsSheet(settings: appSettings)
+    }
+    .sheet(isPresented: $isAboutPresented) {
+      AboutSheet(updates: updates)
+    }
+    .onAppear {
+      if AppChromeController.shared.consumePendingShowAbout() {
+        presentAbout()
+      }
+    }
+    .onReceive(
+      NotificationCenter.default.publisher(for: AppChromeController.showAboutNotification)
+    ) { _ in
+      _ = AppChromeController.shared.consumePendingShowAbout()
+      presentAbout()
     }
     .alert(
       "ZoneLaunch",
@@ -160,6 +183,24 @@ struct ContentView: View {
         "Launch \(appCount) app\(appCount == 1 ? "" : "s") in “\(group.name)” with \(group.ianaTimezone)? All apps in this group must be quit first so the time zone can be applied."
       )
     }
+  }
+
+  /// Presents About after dismissing other modal UI so only one sheet is attached.
+  private func presentAbout() {
+    timezoneSheet = nil
+    groupPendingDeletion = nil
+    groupPendingLaunchAll = nil
+
+    if isSettingsPresented {
+      isSettingsPresented = false
+      // AppKit only allows one sheet; wait a turn after dismiss.
+      DispatchQueue.main.async {
+        isAboutPresented = true
+      }
+      return
+    }
+
+    isAboutPresented = true
   }
 }
 

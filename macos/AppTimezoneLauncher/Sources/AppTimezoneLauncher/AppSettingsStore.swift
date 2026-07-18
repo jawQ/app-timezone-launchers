@@ -55,11 +55,15 @@ final class AppChromeController {
   /// Stable identifier for the primary ZoneLaunch window.
   static let mainWindowIdentifier = NSUserInterfaceItemIdentifier("zonelaunch.main")
 
+  /// Posted when the menu bar (or other chrome) should open the About sheet on the main window.
+  static let showAboutNotification = Notification.Name("zonelaunch.showAbout")
+
   /// Callback used when no main window exists and SwiftUI must open one.
   var openMainWindow: (() -> Void)?
 
   private let closeInterceptor = MainWindowCloseInterceptor()
   private var shouldPresentMainWindowWhenReady = false
+  private var shouldPresentAboutWhenReady = false
 
   private init() {}
 
@@ -131,6 +135,23 @@ final class AppChromeController {
     openMainWindowIfNeeded()
   }
 
+  /// Focuses the main window and asks it to present the About sheet.
+  func showAbout() {
+    shouldPresentAboutWhenReady = true
+    showMainWindow()
+    // Defer so a cold-opened window can attach its SwiftUI hierarchy first.
+    DispatchQueue.main.async { [weak self] in
+      self?.postShowAboutIfNeeded()
+    }
+  }
+
+  /// Called by the main UI when it is ready (or re-ready) to honor a pending About request.
+  func consumePendingShowAbout() -> Bool {
+    guard shouldPresentAboutWhenReady else { return false }
+    shouldPresentAboutWhenReady = false
+    return true
+  }
+
   func registerMainWindow(_ window: NSWindow) {
     window.identifier = Self.mainWindowIdentifier
     window.tabbingMode = .disallowed
@@ -139,6 +160,17 @@ final class AppChromeController {
     if shouldPresentMainWindowWhenReady {
       present(window)
     }
+
+    if shouldPresentAboutWhenReady {
+      DispatchQueue.main.async { [weak self] in
+        self?.postShowAboutIfNeeded()
+      }
+    }
+  }
+
+  private func postShowAboutIfNeeded() {
+    guard shouldPresentAboutWhenReady else { return }
+    NotificationCenter.default.post(name: Self.showAboutNotification, object: nil)
   }
 
   func quit() {

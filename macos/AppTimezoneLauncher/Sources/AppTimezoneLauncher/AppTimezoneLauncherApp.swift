@@ -54,6 +54,12 @@ private struct MenuBarMenuContent: View {
       }
       AppChromeController.shared.showMainWindow()
     }
+    Button("关于") {
+      AppChromeController.shared.openMainWindow = {
+        openWindow(id: "main")
+      }
+      AppChromeController.shared.showAbout()
+    }
     Divider()
     Button("退出应用") {
       AppChromeController.shared.quit()

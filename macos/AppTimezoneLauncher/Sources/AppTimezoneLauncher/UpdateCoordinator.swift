@@ -34,6 +34,8 @@ enum UpdatePresentationState: Equatable {
 final class UpdateCoordinator: NSObject, ObservableObject {
   @Published private(set) var state: UpdatePresentationState = .idle
   @Published var errorMessage: String?
+  /// Soft status after a manual check when no update is available (About panel).
+  @Published private(set) var statusMessage: String?
 
   private var updater: SPUUpdater!
   private var installReply: ((SPUUserUpdateChoice) -> Void)?
@@ -79,6 +81,27 @@ final class UpdateCoordinator: NSObject, ObservableObject {
     }
   }
 
+  /// Label for the About panel's primary update action (includes idle → check).
+  var aboutActionTitle: String {
+    switch state {
+    case .idle:
+      return "检查更新"
+    case .available(let version):
+      return "更新到 v\(version)"
+    case .checking:
+      return "正在检查…"
+    case .downloading(_, let progress):
+      guard let progress else { return "正在下载…" }
+      return "下载 \(Int((progress * 100).rounded()))%"
+    case .preparing:
+      return "正在准备…"
+    case .installing:
+      return "正在重启…"
+    case .failed:
+      return "重试更新"
+    }
+  }
+
   var systemImage: String {
     switch state {
     case .idle, .available:
@@ -99,6 +122,17 @@ final class UpdateCoordinator: NSObject, ObservableObject {
     }
   }
 
+  /// Whether the About panel can start a check or install/retry.
+  var isAboutActionEnabled: Bool {
+    switch state {
+    case .idle, .available, .failed:
+      return true
+    case .checking, .downloading, .preparing, .installing:
+      return false
+    }
+  }
+
+  /// Install a found update, or re-check and install when found (toolbar flow).
   func installOrRetry() {
     if let installReply {
       self.installReply = nil
@@ -107,9 +141,30 @@ final class UpdateCoordinator: NSObject, ObservableObject {
       return
     }
 
+    statusMessage = nil
     installWhenFound = true
     state = .checking(version: state.version)
     updater.checkForUpdates()
+  }
+
+  /// User-initiated check from About: show availability without auto-installing.
+  func checkForUpdatesManually() {
+    switch state {
+    case .available, .failed:
+      installOrRetry()
+    case .checking, .downloading, .preparing, .installing:
+      return
+    case .idle:
+      statusMessage = nil
+      installWhenFound = false
+      state = .checking(version: nil)
+      updater.checkForUpdates()
+    }
+  }
+
+  /// Primary action for the About panel (check or install/retry).
+  func performAboutAction() {
+    checkForUpdatesManually()
   }
 
   private func beginDownload() {
@@ -148,6 +203,7 @@ extension UpdateCoordinator: SPUUserDriver {
   }
 
   func showUserInitiatedUpdateCheck(cancellation: @escaping () -> Void) {
+    statusMessage = nil
     state = .checking(version: state.version)
   }
 
@@ -157,6 +213,7 @@ extension UpdateCoordinator: SPUUserDriver {
     reply: @escaping (SPUUserUpdateChoice) -> Void
   ) {
     let version = appcastItem.displayVersionString
+    statusMessage = nil
 
     guard !appcastItem.isInformationOnlyUpdate else {
       self.state = .failed(
@@ -189,7 +246,9 @@ extension UpdateCoordinator: SPUUserDriver {
     if installWhenFound {
       fail(error)
     } else {
+      installWhenFound = false
       state = .idle
+      statusMessage = "已是最新版本"
     }
     acknowledgement()
   }

@@ -86,7 +86,7 @@ Only if the project later ships with **Developer ID** signing + **notarization**
 
 ## After upgrading
 
-Starting with the first Sparkle-enabled release, ZoneLaunch checks for updates daily. When a newer release is available, a small blue update button appears in the main-window toolbar. Click it once to download the Ed25519-signed archive; after verification and installation, ZoneLaunch restarts automatically.
+Starting with the first Sparkle-enabled release, ZoneLaunch checks for updates daily. When a newer release is available, a small blue update button appears in the main-window toolbar. Click it once to download the Ed25519-signed archive; after verification and installation, ZoneLaunch restarts automatically. You can also open **About** from the main toolbar or menu bar to see the current version and check for updates manually.
 
 Users on an older build without the updater must replace `/Applications/ZoneLaunch.app` manually one last time. Prefer one install path only so you do not get two Dock icons.
 
