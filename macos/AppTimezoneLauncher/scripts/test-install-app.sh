@@ -14,9 +14,11 @@ LSREGISTER_RECORDER="$INSTALL_DIR/lsregister-recorder"
 LEGACY_NAMED_APP="$INSTALL_DIR/App Timezone Launcher.app"
 LEGACY_ID_APP="$INSTALL_DIR/OldZoneLaunch.app"
 DUPLICATE_CANONICAL_APP="$INSTALL_DIR/ZoneLaunch Copy.app"
+NUMBERED_CLONE_APP="$INSTALL_DIR/ZoneLaunch 3.app"
+TRASH_GHOST_APP="/tmp/ZoneLaunch-install-test-trash/ZoneLaunch 2.app"
 
 cleanup() {
-  rm -rf "$INSTALL_DIR"
+  rm -rf "$INSTALL_DIR" "$(dirname "$TRASH_GHOST_APP")"
 }
 trap cleanup EXIT
 
@@ -71,9 +73,41 @@ cat >"$DUPLICATE_CANONICAL_APP/Contents/Info.plist" <<PLIST
 </plist>
 PLIST
 
+# Finder-style numbered clone (ZoneLaunch 3.app) — common multi-icon source.
+mkdir -p "$NUMBERED_CLONE_APP/Contents"
+cat >"$NUMBERED_CLONE_APP/Contents/Info.plist" <<PLIST
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>CFBundleIdentifier</key>
+  <string>$CANONICAL_BUNDLE_ID</string>
+  <key>CFBundleName</key>
+  <string>$APP_NAME</string>
+</dict>
+</plist>
+PLIST
+
+# Synthetic dump entries: trash ghost + numbered clone still registered in LS.
+mkdir -p "$(dirname "$TRASH_GHOST_APP")"
+
 cat >"$LSREGISTER_RECORDER" <<EOF
 #!/usr/bin/env bash
 set -euo pipefail
+
+if [[ "\${1-}" == "-dump" ]]; then
+  cat <<DUMP
+path:                       $NUMBERED_CLONE_APP (0x1001)
+identifier:                 $CANONICAL_BUNDLE_ID
+path:                       $TRASH_GHOST_APP (0x1002)
+identifier:                 $CANONICAL_BUNDLE_ID
+path:                       $TARGET_APP (0x1003)
+identifier:                 $CANONICAL_BUNDLE_ID
+path:                       $SOURCE_APP (0x1004)
+identifier:                 $CANONICAL_BUNDLE_ID
+DUMP
+  exit 0
+fi
 
 printf '%s\n' "\$*" >>"$LSREGISTER_LOG"
 EOF
@@ -89,6 +123,7 @@ test ! -e "$TARGET_APP/Contents/Resources/stale-resource"
 test ! -e "$LEGACY_NAMED_APP"
 test ! -e "$LEGACY_ID_APP"
 test ! -e "$DUPLICATE_CANONICAL_APP"
+test ! -e "$NUMBERED_CLONE_APP"
 test "$(plutil -extract CFBundleIdentifier raw "$TARGET_APP/Contents/Info.plist")" = "$CANONICAL_BUNDLE_ID"
 codesign --verify --deep --strict "$TARGET_APP"
 
@@ -100,6 +135,8 @@ grep -Fxq -- "-u $TARGET_APP" "$LSREGISTER_LOG"
 grep -Fxq -- "-u $LEGACY_NAMED_APP" "$LSREGISTER_LOG"
 grep -Fxq -- "-u $LEGACY_ID_APP" "$LSREGISTER_LOG"
 grep -Fxq -- "-u $DUPLICATE_CANONICAL_APP" "$LSREGISTER_LOG"
+grep -Fxq -- "-u $NUMBERED_CLONE_APP" "$LSREGISTER_LOG"
+grep -Fxq -- "-u $TRASH_GHOST_APP" "$LSREGISTER_LOG"
 grep -Fxq -- "-f $TARGET_APP" "$LSREGISTER_LOG"
 grep -Fxq -- "-gc" "$LSREGISTER_LOG"
 
@@ -109,3 +146,5 @@ force_register_line="$(grep -n -F -- "-f $TARGET_APP" "$LSREGISTER_LOG" | tail -
 gc_line="$(grep -n -F -- "-gc" "$LSREGISTER_LOG" | tail -1 | cut -d: -f1)"
 test "$last_unregister_line" -lt "$force_register_line"
 test "$force_register_line" -lt "$gc_line"
+
+echo "test-install-app.sh: ok"

@@ -276,15 +276,85 @@ struct UpdateToolbarButton: View {
     Button {
       coordinator.installOrRetry()
     } label: {
-      Label(coordinator.buttonTitle, systemImage: coordinator.systemImage)
-        .font(.system(size: 12, weight: .semibold))
+      HStack(spacing: 6) {
+        Group {
+          if isBusy {
+            ProgressView()
+              .controlSize(.small)
+              .scaleEffect(0.78)
+          } else {
+            Image(systemName: coordinator.systemImage)
+              .font(.system(size: 12, weight: .semibold))
+              .symbolRenderingMode(.hierarchical)
+          }
+        }
+        .frame(width: 14, height: 14)
+
+        Text(coordinator.buttonTitle)
+          .font(.system(size: 12, weight: .semibold))
+          .lineLimit(1)
+          .fixedSize(horizontal: true, vertical: false)
+      }
+      .foregroundStyle(foregroundColor)
+      .padding(.horizontal, 12)
+      .frame(height: 28)
+      .frame(minWidth: 118)
+      .background(backgroundColor, in: Capsule(style: .continuous))
+      .overlay {
+        Capsule(style: .continuous)
+          .strokeBorder(borderColor, lineWidth: 1)
+      }
+      .contentShape(Capsule(style: .continuous))
     }
-    .buttonStyle(.borderedProminent)
-    .controlSize(.small)
-    .tint(.blue)
+    .buttonStyle(.plain)
     .disabled(!coordinator.isButtonEnabled)
+    .opacity(coordinator.isButtonEnabled ? 1 : 0.88)
     .help(helpText)
     .accessibilityLabel(coordinator.buttonTitle)
+  }
+
+  private var isBusy: Bool {
+    switch coordinator.state {
+    case .checking, .downloading, .preparing, .installing:
+      return true
+    case .idle, .available, .failed:
+      return false
+    }
+  }
+
+  private var foregroundColor: Color {
+    switch coordinator.state {
+    case .available, .failed:
+      return .white
+    default:
+      return Color.primary.opacity(0.85)
+    }
+  }
+
+  private var backgroundColor: Color {
+    switch coordinator.state {
+    case .available:
+      return ZoneTheme.accent
+    case .failed:
+      return Color.orange.opacity(0.92)
+    case .checking, .downloading, .preparing, .installing:
+      return Color.primary.opacity(0.08)
+    case .idle:
+      return .clear
+    }
+  }
+
+  private var borderColor: Color {
+    switch coordinator.state {
+    case .available:
+      return ZoneTheme.accent.opacity(0.35)
+    case .failed:
+      return Color.orange.opacity(0.4)
+    case .checking, .downloading, .preparing, .installing:
+      return Color.primary.opacity(0.1)
+    case .idle:
+      return .clear
+    }
   }
 
   private var helpText: String {

@@ -64,6 +64,24 @@ is_legacy_bundle_id() {
   return 1
 }
 
+is_product_bundle_id() {
+  local bid="$1"
+  [[ "$bid" == "$CANONICAL_BUNDLE_ID" ]] || is_legacy_bundle_id "$bid"
+}
+
+# True for ZoneLaunch.app, "ZoneLaunch 2.app", "ZoneLaunch 3.app", legacy product name, etc.
+is_product_app_path() {
+  local path="$1"
+  local base
+  base="$(basename "$path")"
+  case "$base" in
+    ZoneLaunch.app | "App Timezone Launcher.app" | ZoneLaunch\ *.app)
+      return 0
+      ;;
+  esac
+  return 1
+}
+
 # Unregister known paths that historically produced a second Dock icon.
 known_paths=(
   "$LEGACY_BUILD_APP"
@@ -86,17 +104,15 @@ for legacy_name in "${LEGACY_APP_BUNDLE_NAMES[@]}"; do
   fi
 done
 
-# Purge install-prefix apps that still carry a legacy Bundle ID, or a second
-# copy of the canonical ZoneLaunch identity at a non-target path.
+# Purge install-prefix apps that still carry a legacy Bundle ID, a second copy
+# of the canonical identity, or Finder-style numbered clones (ZoneLaunch 2.app).
 shopt -s nullglob
 for app in "$INSTALL_DIR"/*.app; do
   [[ -d "$app" ]] || continue
+  [[ "$app" == "$TARGET_APP" ]] && continue
+
   bid="$(bundle_id_of "$app")"
-  if is_legacy_bundle_id "$bid"; then
-    remove_app_bundle "$app"
-    continue
-  fi
-  if [[ "$bid" == "$CANONICAL_BUNDLE_ID" && "$app" != "$TARGET_APP" ]]; then
+  if is_product_bundle_id "$bid" || is_product_app_path "$app"; then
     remove_app_bundle "$app"
   fi
 done
@@ -115,26 +131,61 @@ if [[ "$installed_bundle_id" != "$CANONICAL_BUNDLE_ID" ]]; then
 fi
 
 # Drop every LaunchServices record for this product except the install target.
-# Covers: identity migration, old product names, build-tree copies, and tmp ghosts
-# that previously produced a second Dock / Launchpad icon.
+# Covers: identity migration, numbered Finder clones (ZoneLaunch 2/3.app), Trash
+# ghosts, build-tree copies, Sparkle caches, and tmp paths that produce multi-icons.
 unregister_stale_product_paths() {
   [[ "$REFRESH_LAUNCH_SERVICES" == "1" ]] || return 0
 
-  local path
-  while IFS= read -r path; do
-    [[ -z "$path" ]] && continue
-    if [[ "$path" == "$TARGET_APP" ]]; then
-      continue
-    fi
-    case "$path" in
-      */ZoneLaunch.app | */"App Timezone Launcher.app")
-        unregister_path "$path"
+  local line path identifier
+  path=""
+  identifier=""
+
+  while IFS= read -r line || [[ -n "$line" ]]; do
+    case "$line" in
+      path:*)
+        path="${line#path:}"
+        # Trim leading spaces and trailing " (0x....)" token from lsregister -dump.
+        path="${path#"${path%%[![:space:]]*}"}"
+        path="${path%"${path##*[![:space:]]}"}"
+        if [[ "$path" =~ ^(.*[[:graph:]])[[:space:]]+\(0x[0-9a-fA-F]+\)$ ]]; then
+          path="${BASH_REMATCH[1]}"
+        fi
+        ;;
+      identifier:*)
+        identifier="${line#identifier:}"
+        identifier="${identifier#"${identifier%%[![:space:]]*}"}"
+        identifier="${identifier%"${identifier##*[![:space:]]}"}"
+
+        if [[ -z "$path" || "$path" == "$TARGET_APP" ]]; then
+          path=""
+          identifier=""
+          continue
+        fi
+
+        # Prefer bundle-id match (catches Trash ghosts, caches, arbitrary names).
+        # Fall back to product path name match when dump omits identifier lines.
+        if is_product_bundle_id "$identifier" || is_product_app_path "$path"; then
+          unregister_path "$path"
+        fi
+        path=""
+        identifier=""
         ;;
     esac
+  done < <("$LSREGISTER" -dump 2>/dev/null || true)
+
+  # Second sweep by path name only: some dump formats interleave fields oddly,
+  # and numbered clones must never remain registered.
+  while IFS= read -r path; do
+    [[ -z "$path" ]] && continue
+    [[ "$path" == "$TARGET_APP" ]] && continue
+    if is_product_app_path "$path"; then
+      unregister_path "$path"
+    fi
   done < <(
     "$LSREGISTER" -dump 2>/dev/null \
       | sed -n 's/^path:[[:space:]]*//p' \
-      | sed 's/[[:space:]]*(0x[0-9a-fA-F]*)[[:space:]]*$//'
+      | sed -E 's/[[:space:]]+\(0x[0-9a-fA-F]+\)[[:space:]]*$//' \
+      || true
   )
 }
 
