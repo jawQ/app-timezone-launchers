@@ -58,6 +58,9 @@ final class AppChromeController {
   /// Posted when the menu bar (or other chrome) should open the About sheet on the main window.
   static let showAboutNotification = Notification.Name("zonelaunch.showAbout")
 
+  /// Posted whenever the primary window is presented or brought back to the front.
+  static let mainWindowDidPresentNotification = Notification.Name("zonelaunch.mainWindowDidPresent")
+
   /// Callback used when no main window exists and SwiftUI must open one.
   var openMainWindow: (() -> Void)?
 
@@ -208,6 +211,10 @@ final class AppChromeController {
     window.orderFrontRegardless()
     window.makeKeyAndOrderFront(nil)
     NSApp.activate(ignoringOtherApps: true)
+    NotificationCenter.default.post(
+      name: Self.mainWindowDidPresentNotification,
+      object: window
+    )
   }
 
   private func openMainWindowIfNeeded() {

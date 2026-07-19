@@ -97,9 +97,17 @@ struct ContentView: View {
       AboutSheet(updates: updates)
     }
     .onAppear {
+      updates.checkForUpdatesWhenMainWindowOpens()
       if AppChromeController.shared.consumePendingShowAbout() {
         presentAbout()
       }
+    }
+    .onReceive(
+      NotificationCenter.default.publisher(
+        for: AppChromeController.mainWindowDidPresentNotification
+      )
+    ) { _ in
+      updates.checkForUpdatesWhenMainWindowOpens()
     }
     .onReceive(
       NotificationCenter.default.publisher(for: AppChromeController.showAboutNotification)

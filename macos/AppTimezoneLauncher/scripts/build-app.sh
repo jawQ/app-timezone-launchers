@@ -65,13 +65,11 @@ cat >"$CONTENTS_DIR/Info.plist" <<PLIST
   <key>SUAutomaticallyUpdate</key>
   <false/>
   <key>SUEnableAutomaticChecks</key>
-  <true/>
+  <false/>
   <key>SUFeedURL</key>
   <string>$SPARKLE_FEED_URL</string>
   <key>SUPublicEDKey</key>
   <string>$SPARKLE_PUBLIC_ED_KEY</string>
-  <key>SUScheduledCheckInterval</key>
-  <integer>86400</integer>
   <key>SUSendProfileInfo</key>
   <false/>
   <key>SUVerifyUpdateBeforeExtraction</key>

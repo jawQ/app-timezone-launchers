@@ -18,7 +18,7 @@ test "$(plutil -extract CFBundleName raw "$APP_BUNDLE/Contents/Info.plist")" = "
 test "$(plutil -extract LSUIElement raw "$APP_BUNDLE/Contents/Info.plist")" = "true"
 test "$(plutil -extract SUFeedURL raw "$APP_BUNDLE/Contents/Info.plist")" = "$SPARKLE_FEED_URL"
 test "$(plutil -extract SUPublicEDKey raw "$APP_BUNDLE/Contents/Info.plist")" = "$SPARKLE_PUBLIC_ED_KEY"
-test "$(plutil -extract SUEnableAutomaticChecks raw "$APP_BUNDLE/Contents/Info.plist")" = "true"
+test "$(plutil -extract SUEnableAutomaticChecks raw "$APP_BUNDLE/Contents/Info.plist")" = "false"
 test "$(plutil -extract SUAutomaticallyUpdate raw "$APP_BUNDLE/Contents/Info.plist")" = "false"
 test -d "$APP_BUNDLE/Contents/Frameworks/Sparkle.framework"
 otool -L "$APP_BUNDLE/Contents/MacOS/$BINARY_NAME" \

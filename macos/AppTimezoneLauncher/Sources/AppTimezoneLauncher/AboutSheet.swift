@@ -123,7 +123,7 @@ struct AboutSheet: View {
           .fixedSize(horizontal: false, vertical: true)
           .frame(maxWidth: .infinity, alignment: .leading)
       } else {
-        Text("也可等待每日自动检查；有更新时主窗口工具栏会出现安装按钮。")
+        Text("每次打开主界面都会自动检查；有更新时主窗口工具栏会出现安装按钮。")
           .font(.system(size: 11))
           .foregroundStyle(.secondary)
           .fixedSize(horizontal: false, vertical: true)

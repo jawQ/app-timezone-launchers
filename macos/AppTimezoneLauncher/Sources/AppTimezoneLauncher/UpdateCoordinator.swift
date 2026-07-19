@@ -42,6 +42,8 @@ final class UpdateCoordinator: NSObject, ObservableObject {
   private var installWhenFound = false
   private var expectedDownloadLength: UInt64 = 0
   private var receivedDownloadLength: UInt64 = 0
+  private var activeUpdateCheckID: UUID?
+  private var updateCheckTimeoutTask: Task<Void, Never>?
 
   override init() {
     super.init()
@@ -141,10 +143,7 @@ final class UpdateCoordinator: NSObject, ObservableObject {
       return
     }
 
-    statusMessage = nil
-    installWhenFound = true
-    state = .checking(version: state.version)
-    updater.checkForUpdates()
+    startUpdateCheck(installWhenFound: true)
   }
 
   /// User-initiated check from About: show availability without auto-installing.
@@ -155,10 +154,7 @@ final class UpdateCoordinator: NSObject, ObservableObject {
     case .checking, .downloading, .preparing, .installing:
       return
     case .idle:
-      statusMessage = nil
-      installWhenFound = false
-      state = .checking(version: nil)
-      updater.checkForUpdates()
+      startUpdateCheck(installWhenFound: false)
     }
   }
 
@@ -167,7 +163,61 @@ final class UpdateCoordinator: NSObject, ObservableObject {
     checkForUpdatesManually()
   }
 
+  /// Checks for updates whenever the main window is opened or brought to the front.
+  ///
+  /// Keep an already discovered update available for the user to install, and do not
+  /// interrupt an update session that is already checking, downloading, or installing.
+  func checkForUpdatesWhenMainWindowOpens() {
+    switch state {
+    case .checking, .downloading, .preparing, .installing, .available:
+      return
+    case .idle, .failed:
+      startUpdateCheck(installWhenFound: false)
+    }
+  }
+
+  private var canStartUpdateCheck: Bool {
+    updater.canCheckForUpdates && !updater.sessionInProgress
+  }
+
+  private func startUpdateCheck(installWhenFound: Bool) {
+    guard canStartUpdateCheck else { return }
+    statusMessage = nil
+    errorMessage = nil
+    self.installWhenFound = installWhenFound
+    state = .checking(version: state.version)
+    armUpdateCheckTimeout()
+    updater.checkForUpdates()
+  }
+
+  private func armUpdateCheckTimeout() {
+    updateCheckTimeoutTask?.cancel()
+
+    let checkID = UUID()
+    activeUpdateCheckID = checkID
+    updateCheckTimeoutTask = Task { @MainActor [weak self] in
+      try? await Task.sleep(nanoseconds: 20_000_000_000)
+      guard !Task.isCancelled, let self, self.activeUpdateCheckID == checkID else { return }
+      guard case .checking = self.state else { return }
+
+      self.fail(
+        NSError(
+          domain: "ZoneLaunch.Update",
+          code: 1,
+          userInfo: [NSLocalizedDescriptionKey: "检查更新超时，请检查网络后重试。"]
+        )
+      )
+    }
+  }
+
+  private func finishUpdateCheck() {
+    updateCheckTimeoutTask?.cancel()
+    updateCheckTimeoutTask = nil
+    activeUpdateCheckID = nil
+  }
+
   private func beginDownload() {
+    finishUpdateCheck()
     let version = state.version ?? ""
     expectedDownloadLength = 0
     receivedDownloadLength = 0
@@ -180,6 +230,7 @@ final class UpdateCoordinator: NSObject, ObservableObject {
   }
 
   private func fail(_ error: Error) {
+    finishUpdateCheck()
     let message = (error as NSError).localizedDescription
     state = .failed(version: state.version, message: message)
     errorMessage = message
@@ -195,7 +246,7 @@ extension UpdateCoordinator: SPUUserDriver {
   ) {
     reply(
       SUUpdatePermissionResponse(
-        automaticUpdateChecks: true,
+        automaticUpdateChecks: false,
         automaticUpdateDownloading: false,
         sendSystemProfile: false
       )
@@ -213,6 +264,7 @@ extension UpdateCoordinator: SPUUserDriver {
     reply: @escaping (SPUUserUpdateChoice) -> Void
   ) {
     let version = appcastItem.displayVersionString
+    finishUpdateCheck()
     statusMessage = nil
 
     guard !appcastItem.isInformationOnlyUpdate else {
@@ -243,6 +295,7 @@ extension UpdateCoordinator: SPUUserDriver {
     _ error: any Error,
     acknowledgement: @escaping () -> Void
   ) {
+    finishUpdateCheck()
     if installWhenFound {
       fail(error)
     } else {
@@ -315,6 +368,7 @@ extension UpdateCoordinator: SPUUserDriver {
   }
 
   func dismissUpdateInstallation() {
+    finishUpdateCheck()
     installReply = nil
     installWhenFound = false
     if case .failed = state {
