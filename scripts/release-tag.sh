@@ -41,7 +41,7 @@ Requirements:
   - current branch is master
   - HEAD matches origin/master (after fetch)
 
-Pushing the tag triggers GitHub Actions to build and attach ZoneLaunch-*-macos.zip.
+Pushing the tag triggers GitHub Actions to build and attach ZoneLaunch-*-macos.dmg / .zip.
 EOF
 }
 

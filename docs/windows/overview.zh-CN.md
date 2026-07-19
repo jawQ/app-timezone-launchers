@@ -29,12 +29,13 @@ Windows 与 macOS **并排支持**。macOS 的 `bin/`、`install.sh` 与 ZoneLau
 
 | 平台 | 下载文件名模式 |
 | --- | --- |
-| macOS ZoneLaunch | `ZoneLaunch-<version>-macos.zip` |
+| macOS ZoneLaunch（推荐安装） | `ZoneLaunch-<version>-macos.dmg` |
+| macOS ZoneLaunch（zip / 更新器用） | `ZoneLaunch-<version>-macos.zip` |
 | Windows 脚本（CMD/PS + WSL） | `app-timezone-launchers-<version>-windows.zip` |
 | Windows CLI（amd64） | `ZoneLaunch-cli-<version>-windows-amd64.zip` |
 | Windows CLI（arm64） | `ZoneLaunch-cli-<version>-windows-arm64.zip` |
 
-发版根目录还有统一的 `SHA256SUMS`，覆盖上述四个压缩包。Windows 脚本包解压后的**顶层文件夹名**也带 `-windows`。多平台发版时禁止使用无平台后缀的模糊名（如单独的 `ZoneLaunch.zip`）。
+发版根目录还有统一的 `SHA256SUMS`，覆盖上述五个资源。Windows 脚本包解压后的**顶层文件夹名**也带 `-windows`。多平台发版时禁止使用无平台后缀的模糊名（如单独的 `ZoneLaunch.zip`）。
 
 ## 仓库布局
 

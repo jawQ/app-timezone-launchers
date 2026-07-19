@@ -100,4 +100,4 @@ SmartScreen 可能提示未签名：若信任该构建，选 **更多信息 → 
 bash ./wsl/install.sh --all
 ```
 
-**不要**在 Windows 上使用 `ZoneLaunch-*-macos.zip`——那是 macOS 应用专用资源。
+**不要**在 Windows 上使用 `ZoneLaunch-*-macos.dmg` / `ZoneLaunch-*-macos.zip`——那是 macOS 应用专用资源。

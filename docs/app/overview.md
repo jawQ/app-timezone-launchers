@@ -36,7 +36,7 @@ Both approaches inject `TZ` into the **new** process only. They can be installed
 
 ## Get the app
 
-1. **Preferred:** [Install from GitHub Releases](install-from-release.md) (ad-hoc signed zip, no paid Apple Developer account). **First open is blocked by Gatekeeper until you click Open Anyway** — see that page.
+1. **Preferred:** [Install from GitHub Releases](install-from-release.md) (prefer the ad-hoc signed **DMG**, zip also available; no paid Apple Developer account). **First open is blocked by Gatekeeper until you click Open Anyway** — see that page.
 2. **Developers:** [Build from source](build-from-source.md)
 
 ## Identity

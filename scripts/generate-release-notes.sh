@@ -204,6 +204,7 @@ _Commit subjects are shown as recorded in git (may be Chinese or English)._
 
 **Assets**
 
+- \`ZoneLaunch-${version}-macos.dmg\` — **recommended** first install (open DMG, drag app to Applications)
 - \`ZoneLaunch-${version}-macos.zip\` — \`ZoneLaunch.app\` (ad-hoc signed, **not notarized**; also used by in-app updates)
 - \`appcast-macos.xml\` — signed Sparkle update feed for macOS
 - \`app-timezone-launchers-${version}-windows.zip\` — native Windows launchers + WSL helpers
@@ -214,9 +215,10 @@ _Commit subjects are shown as recorded in git (may be Chinese or English)._
 
 **Install**
 
-1. Unzip and drag **ZoneLaunch.app** into Applications.
-2. First open is often blocked by Gatekeeper: **Done**, then **System Settings → Privacy & Security → Open Anyway**.
-3. Guide with screenshots: [Install from Releases](https://github.com/$(repo_slug)/blob/master/docs/app/install-from-release.md)
+1. Prefer the **\`.dmg\`**: open it, drag **ZoneLaunch** into Applications, eject the disk image.
+2. Or unzip the **\`.zip\`** and drag **ZoneLaunch.app** into Applications.
+3. First open is often blocked by Gatekeeper: **Done**, then **System Settings → Privacy & Security → Open Anyway**.
+4. Guide with screenshots: [Install from Releases](https://github.com/$(repo_slug)/blob/master/docs/app/install-from-release.md)
 
 Windows installation: [Install on Windows](https://github.com/$(repo_slug)/blob/master/docs/windows/install.md)
 
@@ -262,6 +264,7 @@ ${body}
 
 **Assets**
 
+- \`ZoneLaunch-${version}-macos.dmg\` — **recommended** first install (open DMG, drag app to Applications)
 - \`ZoneLaunch-${version}-macos.zip\` — \`ZoneLaunch.app\` (ad-hoc signed, **not notarized**; also used by in-app updates)
 - \`appcast-macos.xml\` — signed Sparkle update feed for macOS
 - \`app-timezone-launchers-${version}-windows.zip\` — native Windows launchers + WSL helpers
@@ -272,9 +275,10 @@ ${body}
 
 **Install**
 
-1. Unzip and drag **ZoneLaunch.app** into Applications.
-2. First open is often blocked by Gatekeeper: **Done**, then **System Settings → Privacy & Security → Open Anyway**.
-3. Guide with screenshots: [Install from Releases](https://github.com/$(repo_slug)/blob/master/docs/app/install-from-release.md)
+1. Prefer the **\`.dmg\`**: open it, drag **ZoneLaunch** into Applications, eject the disk image.
+2. Or unzip the **\`.zip\`** and drag **ZoneLaunch.app** into Applications.
+3. First open is often blocked by Gatekeeper: **Done**, then **System Settings → Privacy & Security → Open Anyway**.
+4. Guide with screenshots: [Install from Releases](https://github.com/$(repo_slug)/blob/master/docs/app/install-from-release.md)
 
 Windows installation: [Install on Windows](https://github.com/$(repo_slug)/blob/master/docs/windows/install.md)
 
@@ -341,6 +345,7 @@ _提交说明保持 git 原文（可能为中文或英文）。_
 
 **资源**
 
+- \`ZoneLaunch-${version}-macos.dmg\` — **推荐**首次安装（打开 DMG，将 App 拖到「应用程序」）
 - \`ZoneLaunch-${version}-macos.zip\` — \`ZoneLaunch.app\`（ad-hoc 签名，**未公证**，同时供应用内更新使用）
 - \`appcast-macos.xml\` — macOS 的 Sparkle 签名更新源
 - \`app-timezone-launchers-${version}-windows.zip\` — Windows 原生启动器 + WSL 辅助
@@ -351,9 +356,10 @@ _提交说明保持 git 原文（可能为中文或英文）。_
 
 **安装步骤**
 
-1. 解压后将 **ZoneLaunch.app** 拖到「应用程序」。
-2. 首次打开常被门禁拦截：点 **Done / 完成**，再到 **系统设置 → 隐私与安全性 → Open Anyway / 仍要打开**。
-3. 图文说明：[从 Release 安装](https://github.com/$(repo_slug)/blob/master/docs/app/install-from-release.zh-CN.md)
+1. 优先用 **\`.dmg\`**：打开后将 **ZoneLaunch** 拖到「应用程序」，再推出磁盘映像。
+2. 或解压 **\`.zip\`**，将 **ZoneLaunch.app** 拖到「应用程序」。
+3. 首次打开常被门禁拦截：点 **Done / 完成**，再到 **系统设置 → 隐私与安全性 → Open Anyway / 仍要打开**。
+4. 图文说明：[从 Release 安装](https://github.com/$(repo_slug)/blob/master/docs/app/install-from-release.zh-CN.md)
 
 Windows 安装：[Windows 安装指南](https://github.com/$(repo_slug)/blob/master/docs/windows/install.zh-CN.md)
 

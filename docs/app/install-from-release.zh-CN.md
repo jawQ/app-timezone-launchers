@@ -11,11 +11,19 @@
 
 1. 打开最新 Release：  
    **https://github.com/jawQ/app-timezone-launchers/releases/latest**
-2. 下载 `ZoneLaunch-<version>-macos.zip`（预构建 App）。  
+2. **推荐下载** `ZoneLaunch-<version>-macos.dmg`（磁盘映像：打开后拖到「应用程序」即可）。  
+   `.zip` 是同一份 App（同时供应用内更新使用）；更习惯压缩包时用 zip。  
    **Source code** 的 zip/tar 是整仓库源码，不是现成 App。
 3. 可选：用同页的 `SHA256SUMS` 核对校验和
 
-## 安装
+## 安装（推荐：DMG）
+
+1. 双击 `ZoneLaunch-*-macos.dmg` 挂载磁盘映像。
+2. 将 **ZoneLaunch** 拖到映像里的 **Applications** 快捷方式（或 `/Applications`）。
+3. 推出该磁盘映像。
+4. 从「应用程序」打开 ZoneLaunch（首次打开通常会被拦截——见下文）。
+
+## 安装（zip）
 
 ```bash
 # 假设 zip 在 ~/Downloads
@@ -92,7 +100,7 @@ open /Applications/ZoneLaunch.app
 
 仍在使用不含更新器的旧版本时，需要最后手动替换一次 `/Applications/ZoneLaunch.app`。尽量只保留一个安装路径，避免 Dock 出现两个图标。
 
-若你曾用源码里的 `./scripts/install-app.sh` 安装，该脚本还会清理历史 Bundle ID 与重复注册。纯 zip 安装时，先删旧再移入新版本通常即可。
+若你曾用源码里的 `./scripts/install-app.sh` 安装，该脚本还会清理历史 Bundle ID 与重复注册。纯 DMG/zip 安装时，先删旧再移入新版本通常即可。
 
 ## 要求
 

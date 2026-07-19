@@ -63,10 +63,12 @@ jobs:
       - name: Verify macOS artifacts
         run: |
           test -f "dist/ZoneLaunch-${{ steps.version.outputs.version }}-macos.zip"
+          test -f "dist/ZoneLaunch-${{ steps.version.outputs.version }}-macos.dmg"
           test -f dist/appcast-macos.xml
           test -f dist/SHA256SUMS
           (cd dist && shasum -a 256 -c SHA256SUMS)
           unzip -t "dist/ZoneLaunch-${{ steps.version.outputs.version }}-macos.zip"
+          hdiutil imageinfo "dist/ZoneLaunch-${{ steps.version.outputs.version }}-macos.dmg" >/dev/null
           xmllint --noout dist/appcast-macos.xml
           grep -Fq 'sparkle:edSignature=' dist/appcast-macos.xml
           grep -Fq "ZoneLaunch-${{ steps.version.outputs.version }}-macos.zip" dist/appcast-macos.xml
@@ -79,6 +81,7 @@ jobs:
           retention-days: 7
           path: |
             dist/ZoneLaunch-${{ steps.version.outputs.version }}-macos.zip
+            dist/ZoneLaunch-${{ steps.version.outputs.version }}-macos.dmg
             dist/appcast-macos.xml
             dist/SHA256SUMS
 
@@ -185,6 +188,7 @@ jobs:
           VERSION: ${{ needs.build-macos.outputs.version }}
         run: |
           test -f "dist/ZoneLaunch-${VERSION}-macos.zip"
+          test -f "dist/ZoneLaunch-${VERSION}-macos.dmg"
           test -f dist/appcast-macos.xml
           test -f "dist/app-timezone-launchers-${VERSION}-windows.zip"
           test -f "dist/ZoneLaunch-cli-${VERSION}-windows-amd64.zip"
@@ -206,11 +210,12 @@ jobs:
             cd dist
             sha256sum \
               "ZoneLaunch-${VERSION}-macos.zip" \
+              "ZoneLaunch-${VERSION}-macos.dmg" \
               "app-timezone-launchers-${VERSION}-windows.zip" \
               "ZoneLaunch-cli-${VERSION}-windows-amd64.zip" \
               "ZoneLaunch-cli-${VERSION}-windows-arm64.zip" \
               >SHA256SUMS
-            test "$(wc -l < SHA256SUMS)" -eq 4
+            test "$(wc -l < SHA256SUMS)" -eq 5
             sha256sum -c SHA256SUMS
           )
 
@@ -236,6 +241,7 @@ jobs:
           body_path: dist/RELEASE_NOTES.md
           files: |
             dist/ZoneLaunch-${{ needs.build-macos.outputs.version }}-macos.zip
+            dist/ZoneLaunch-${{ needs.build-macos.outputs.version }}-macos.dmg
             dist/appcast-macos.xml
             dist/app-timezone-launchers-${{ needs.build-macos.outputs.version }}-windows.zip
             dist/ZoneLaunch-cli-${{ needs.build-macos.outputs.version }}-windows-amd64.zip

@@ -10,11 +10,19 @@ Download a prebuilt **ZoneLaunch.app** without cloning the repo or installing Xc
 
 1. Open the latest release:  
    **https://github.com/jawQ/app-timezone-launchers/releases/latest**
-2. Download `ZoneLaunch-<version>-macos.zip` (the prebuilt app).  
+2. Prefer **`ZoneLaunch-<version>-macos.dmg`** (disk image — open and drag to Applications).  
+   The **`.zip`** is the same app (also used by in-app updates); use it if you prefer a plain archive.  
    Ignore **Source code** zip/tar unless you want the full repository.
 3. Optional: check the checksum against `SHA256SUMS` in the same release
 
-## Install
+## Install (recommended: DMG)
+
+1. Double-click `ZoneLaunch-*-macos.dmg` to mount the disk image.
+2. Drag **ZoneLaunch** into the **Applications** shortcut on the image (or into `/Applications`).
+3. Eject the disk image.
+4. Open ZoneLaunch from Applications (first open is usually blocked — see below).
+
+## Install (zip)
 
 ```bash
 # Example after downloading to ~/Downloads
@@ -39,37 +47,37 @@ Do **not** expect a double-click to work on the first try after a Release downlo
 
 | Factor | What happens |
 | --- | --- |
-| Downloaded from the internet | macOS marks the file with a **quarantine** attribute |
-| Ad-hoc signature only | Signed without a paid **Developer ID** certificate |
-| Not notarized | Apple did not scan/approve this binary for Gatekeeper |
+| Downloaded from the internet | macOS marks the file with a **quarantine** flag |
+| Ad-hoc signature only | No paid **Developer ID** certificate |
+| Not notarized | Apple did not scan/approve the binary for Gatekeeper |
 
-Gatekeeper then shows a dialog like the one below. Moving the app into **Applications** does **not** remove this block. Double-click or `open` will fail until you explicitly allow the app once.
+Gatekeeper shows a dialog like the one below. Moving the app into Applications does **not** clear the block. You must **allow it once** in System Settings before double-click or `open` will succeed.
 
-![Gatekeeper dialog: “ZoneLaunch” Not Opened — click Done, not Move to Trash](images/gatekeeper-not-opened.png)
+![Gatekeeper dialog: “ZoneLaunch” can’t be opened — click Done, not Move to Trash](images/gatekeeper-not-opened.png)
 
-This is the same class of warning many free open-source Mac apps get when they ship without a $99/year Apple Developer Program membership and notarization. **It is not proof of malware.**
+Many free, open-source Mac apps that are not in the paid Apple Developer Program hit the same prompt. **That is not the same as “this app is malware.”**
 
-## First open — recommended steps (matches current macOS UI)
+## First open — recommended steps (current System Settings UI)
 
 ### 1. Trigger the block once
 
-Double-click **ZoneLaunch** (in Downloads or Applications). When the yellow-warning dialog appears (screenshot above), click **Done** (do **not** choose **Move to Trash**).
+Double-click **ZoneLaunch** (from Downloads or Applications). When you see the yellow warning dialog above, click **Done** (**not** **Move to Trash**).
 
-### 2. Allow it in System Settings
+### 2. Allow it in Privacy & Security
 
-1. Open **System Settings** → **Privacy & Security**
-2. Scroll to the security section. You should see a banner like the screenshot below.
+1. Open **System Settings → Privacy & Security**
+2. Scroll to the security section; you should see a banner like the one below
 3. Click **Open Anyway**
-4. Confirm again if macOS asks
+4. Confirm again if prompted
 
 ![Privacy & Security: “ZoneLaunch” was blocked — click Open Anyway](images/gatekeeper-open-anyway.png)
 
-After that, ZoneLaunch opens normally on later launches.
+After that, opening ZoneLaunch works normally.
 
 ### Alternative: right-click Open
 
-In Finder: **Control-click** (or right-click) **ZoneLaunch** → **Open** → **Open**.  
-On newer macOS versions this alone may not be enough; use **Open Anyway** above if the block dialog returns.
+In Finder, **Control-click** (or right-click) **ZoneLaunch** → **Open** → **Open**.  
+On newer macOS versions this is sometimes not enough; you may still need **Open Anyway** above.
 
 ### Optional (advanced): clear quarantine in Terminal
 
@@ -80,22 +88,23 @@ xattr -dr com.apple.quarantine /Applications/ZoneLaunch.app
 open /Applications/ZoneLaunch.app
 ```
 
-## Will this go away in a future release?
+## Will later releases ask again?
 
-Only if the project later ships with **Developer ID** signing + **notarization** (requires a paid Apple Developer account). Until then, the steps above remain the supported install path for Release zips.
+As long as builds stay **free ad-hoc signed and not notarized**, first open of a newly downloaded build will still hit this prompt.  
+Only **paid Developer ID + notarization** would make double-click-and-go the default experience.
 
-## After upgrading
+## Upgrades
 
-Starting with the first Sparkle-enabled release, ZoneLaunch checks for updates daily. When a newer release is available, a small blue update button appears in the main-window toolbar. Click it once to download the Ed25519-signed archive; after verification and installation, ZoneLaunch restarts automatically. You can also open **About** from the main toolbar or menu bar to see the current version and check for updates manually.
+From the first Sparkle-enabled release onward, ZoneLaunch checks for updates once a day. When an update is available, a small blue button appears in the main window toolbar; one click downloads the Ed25519-signed zip, verifies it, installs, and restarts. You can also open **About** from the toolbar or menu bar to see the version and check for updates manually.
 
-Users on an older build without the updater must replace `/Applications/ZoneLaunch.app` manually one last time. Prefer one install path only so you do not get two Dock icons.
+If you are still on a build without the updater, replace `/Applications/ZoneLaunch.app` once more by hand. Keep a single install path so the Dock does not show two icons.
 
-If you previously installed from source with `./scripts/install-app.sh`, that script also cleans legacy Bundle IDs and duplicate registrations. For zip installs, removing the old app before moving the new one is enough in most cases.
+If you previously installed with `./scripts/install-app.sh` from source, that script also cleans legacy bundle IDs and duplicate registrations. For pure DMG/zip installs, deleting the old app then moving in the new one is usually enough.
 
 ## Requirements
 
 - macOS 14 or later
-- Bundle ID of official builds: `app.zonelaunch.launcher`
+- Official build Bundle ID: `app.zonelaunch.launcher`
 
 ## Uninstall
 
@@ -103,18 +112,18 @@ If you previously installed from source with `./scripts/install-app.sh`, that sc
 rm -rf /Applications/ZoneLaunch.app
 ```
 
-User configuration (time-zone groups, dropped apps) lives under:
+User settings (timezone groups, added apps) live at:
 
 ```text
 ~/Library/Application Support/App Timezone Launcher/
 ```
 
-Delete that folder only if you also want to wipe settings.
+Delete that directory only if you also want to clear settings.
 
-## Still prefer scripts?
+## Prefer shell launchers?
 
-Shell launchers remain the lightest path. See the [repository README](../../README.md).
+Shell commands remain the lightest path — see the [repository README](../../README.md).
 
-## Build it yourself instead
+## Build from source instead
 
 See [Build from source](build-from-source.md).

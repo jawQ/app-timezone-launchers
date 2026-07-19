@@ -58,7 +58,7 @@ npm run release:package -- 0.1.0
 # or: ./macos/AppTimezoneLauncher/scripts/package-release.sh 0.1.0
 ```
 
-Produces under `dist/`: `ZoneLaunch-0.1.0-macos.zip`, `SHA256SUMS` (gitignored). **Does not** create a GitHub Release.
+Produces under `dist/`: `ZoneLaunch-0.1.0-macos.zip`, `ZoneLaunch-0.1.0-macos.dmg`, `SHA256SUMS` (gitignored). **Does not** create a GitHub Release.
 
 ## Verify
 

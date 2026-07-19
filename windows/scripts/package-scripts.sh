@@ -35,7 +35,7 @@ Requirements:
   zip, and either shasum or sha256sum.
 
 The zip root folder name includes "-windows" so downloads are unambiguous
-even after extraction. macOS app zips remain ZoneLaunch-<VERSION>-macos.zip.
+even after extraction. macOS app assets remain ZoneLaunch-<VERSION>-macos.dmg / .zip.
 EOF
 }
 
@@ -127,7 +127,7 @@ This archive is for Windows (native CMD/PowerShell + WSL).
 It is NOT the macOS ZoneLaunch app.
 
 Platform label: windows
-macOS app downloads use: ZoneLaunch-<version>-macos.zip
+macOS app downloads use: ZoneLaunch-<version>-macos.dmg (install) and ZoneLaunch-<version>-macos.zip (updater)
 
 Native Windows (CMD / PowerShell / double-click):
   powershell -ExecutionPolicy Bypass -File .\install.ps1 -All -AddToPath

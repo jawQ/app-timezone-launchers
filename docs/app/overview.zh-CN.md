@@ -36,7 +36,7 @@ ZoneLaunch 是可选的 **图形界面**，与 shell 启动命令做同一件事
 
 ## 如何获取
 
-1. **推荐：** [从 GitHub Releases 安装](install-from-release.zh-CN.md)（ad-hoc 签名 zip，无需付费苹果开发者账号）。**首次打开会被门禁拦截，需在「隐私与安全性」点「仍要打开」**——详见该页。
+1. **推荐：** [从 GitHub Releases 安装](install-from-release.zh-CN.md)（优先用 ad-hoc 签名 **DMG**，也可下载 zip；无需付费苹果开发者账号）。**首次打开会被门禁拦截，需在「隐私与安全性」点「仍要打开」**——详见该页。
 2. **开发者：** [从源码构建](build-from-source.zh-CN.md)
 
 ## 应用身份

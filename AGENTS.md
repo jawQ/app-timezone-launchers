@@ -57,7 +57,7 @@ npm run release:tag:test              # self-test
 | `release:tag -- X.Y.Z` | Explicit version + tag + push |
 | `release:tag:dry-run` | Preview only |
 | `release:tag:test` / `test:release-tag` | Helper unit checks |
-| `release:package` | `package-release.sh` only (optional version arg) |
+| `release:package` | `package-release.sh` only — zip + dmg (optional version arg) |
 | `release:notes -- vX.Y.Z` | Preview bilingual release notes |
 
 Underlying scripts: `./scripts/release-tag.sh`, `./scripts/generate-release-notes.sh`.  

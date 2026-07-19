@@ -56,7 +56,7 @@ npm run release:tag:test              # 自检
 | `release:tag -- X.Y.Z` | 指定版本 + tag + 推送 |
 | `release:tag:dry-run` | 仅预览 |
 | `release:tag:test` / `test:release-tag` | 辅助逻辑自检 |
-| `release:package` | 仅 `package-release.sh`（可带版本参数） |
+| `release:package` | 仅 `package-release.sh` — zip + dmg（可带版本参数） |
 | `release:notes -- vX.Y.Z` | 预览中英双语 Release 说明 |
 
 底层脚本：`./scripts/release-tag.sh`、`./scripts/generate-release-notes.sh`。  

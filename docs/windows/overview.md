@@ -29,12 +29,13 @@ See [Install on Windows](install.md) (native + WSL).
 
 | Platform | Download name pattern |
 | --- | --- |
-| macOS ZoneLaunch app | `ZoneLaunch-<version>-macos.zip` |
+| macOS ZoneLaunch app (install) | `ZoneLaunch-<version>-macos.dmg` |
+| macOS ZoneLaunch app (zip / updater) | `ZoneLaunch-<version>-macos.zip` |
 | Windows scripts (CMD/PS + WSL) | `app-timezone-launchers-<version>-windows.zip` |
 | Windows CLI (amd64) | `ZoneLaunch-cli-<version>-windows-amd64.zip` |
 | Windows CLI (arm64) | `ZoneLaunch-cli-<version>-windows-arm64.zip` |
 
-A unified `SHA256SUMS` at the release root lists all four archives. Windows script zips extract to a folder whose name also ends with `-windows`. Never publish an unlabeled `ZoneLaunch.zip` for multi-platform releases.
+A unified `SHA256SUMS` at the release root lists all five archives. Windows script zips extract to a folder whose name also ends with `-windows`. Never publish an unlabeled `ZoneLaunch.zip` for multi-platform releases.
 
 ## Layout in the repo
 

@@ -34,11 +34,13 @@ open "/Applications/ZoneLaunch.app"
 Bundle ID **强绑定**为 `app.zonelaunch.launcher`（`scripts/app-identity.sh`）。  
 `install-app.sh` 会清理历史 ID / 旧应用名，避免双 Dock 图标。
 
-打 Release 同款 zip：
+打 Release 同款 zip + dmg：
 
 ```bash
 # 仓库根目录
 ./macos/AppTimezoneLauncher/scripts/package-release.sh 0.1.0
+# → dist/ZoneLaunch-0.1.0-macos.zip  (Sparkle / 压缩包安装)
+# → dist/ZoneLaunch-0.1.0-macos.dmg  (推荐：打开后拖到 Applications)
 ```
 
 ## 验证

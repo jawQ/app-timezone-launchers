@@ -100,4 +100,4 @@ Extract, then:
 bash ./wsl/install.sh --all
 ```
 
-Do **not** use `ZoneLaunch-*-macos.zip` on Windows — that asset is the macOS app only.
+Do **not** use `ZoneLaunch-*-macos.dmg` / `ZoneLaunch-*-macos.zip` on Windows — those assets are the macOS app only.

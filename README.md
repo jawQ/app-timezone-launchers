@@ -23,7 +23,7 @@ To solve this, the project lets you assign a time zone to specific office or soc
 | | **macOS scripts** | **ZoneLaunch (macOS GUI)** | **Windows native** | **WSL** |
 | --- | --- | --- | --- | --- |
 | Best for | Fixed apps (Feishu, WeChat, …) | Many apps, drag-and-drop | CMD / PowerShell / double-click | VS Code, Docker, Linux CLIs; optional Windows `.exe` interop |
-| Install | `./install.sh` | [Releases](https://github.com/jawQ/app-timezone-launchers/releases/latest) (`*-macos.zip`) | `windows\install.ps1` | `windows/wsl/install.sh` |
+| Install | `./install.sh` | [Releases](https://github.com/jawQ/app-timezone-launchers/releases/latest) (`*-macos.dmg` preferred, or `*-macos.zip`) | `windows\install.ps1` | `windows/wsl/install.sh` |
 | Docs | below | [App overview](docs/app/overview.md) | [Windows](docs/windows/overview.md) | [WSL](docs/windows/wsl.md) |
 
 **Most people only need scripts** — lightest path.
@@ -114,7 +114,7 @@ Side-by-side support — **does not change** the macOS install path above.
 
 Release zip for this platform: **`app-timezone-launchers-<version>-windows.zip`** (name and extracted folder both include `-windows`).
 
-macOS app zip remains **`ZoneLaunch-<version>-macos.zip`**.
+macOS app assets remain **`ZoneLaunch-<version>-macos.dmg`** (preferred install) and **`ZoneLaunch-<version>-macos.zip`** (also used by in-app updates).
 
 Overview: [docs/windows/overview.md](docs/windows/overview.md).
 

@@ -37,7 +37,7 @@ rm -f "$key_file"
 | `npm run release:tag:dry-run` | 打印下一自动 tag 与 workflow 链接；**不**打 tag、**不**推送 |
 | `npm run release:tag:test` | 版本辅助逻辑自检 |
 | `npm run test:release-tag` | 同 `release:tag:test` |
-| `npm run release:package` | 仅本地打 zip（可传版本：`npm run release:package -- 0.1.1`）——**不会**创建 GitHub Release |
+| `npm run release:package` | 仅本地打 zip + dmg（可传版本：`npm run release:package -- 0.1.1`）——**不会**创建 GitHub Release |
 | `npm run release:notes -- v0.1.2` | 预览某版本的**中英双语** Release 说明 |
 
 不用 npm 时等价命令：
@@ -97,12 +97,13 @@ tag 必须是 `v1.2.3` 这种三段数字。workflow 匹配 `v*`。
 
 ## 会发布什么
 
+- `ZoneLaunch-<version>-macos.dmg` — **推荐**首次安装（打开 DMG，将 App 拖到「应用程序」）
 - `ZoneLaunch-<version>-macos.zip` — ad-hoc 签名的 App，同时供应用内更新使用
-- `appcast-macos.xml` — 含 macOS 压缩包 Ed25519 签名的 Sparkle 更新源
+- `appcast-macos.xml` — 含 macOS zip 的 Ed25519 签名的 Sparkle 更新源
 - `app-timezone-launchers-<version>-windows.zip` — Windows 原生 CMD/PowerShell 启动器 + WSL 辅助
 - `ZoneLaunch-cli-<version>-windows-amd64.zip` — Intel/AMD Windows CLI
 - `ZoneLaunch-cli-<version>-windows-arm64.zip` — ARM/骁龙 Windows CLI
-- `SHA256SUMS` — 全部四个平台压缩包的统一校验和
+- `SHA256SUMS` — 全部五个平台压缩包的统一校验和
 - **版本日志（每版固定两种语言）**
   - 英文：Release 页默认正文（`RELEASE_NOTES.md`）
   - 中文：顶部 **[中文 →]** 下载该版本的 `RELEASE_NOTES.zh-CN.md` 附件

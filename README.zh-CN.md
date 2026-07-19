@@ -23,7 +23,7 @@
 | | **macOS 脚本** | **ZoneLaunch（macOS GUI）** | **Windows 原生** | **WSL** |
 | --- | --- | --- | --- | --- |
 | 适合 | 固定几个 App（飞书、微信等） | 任意 App、拖拽、多时区组 | CMD / PowerShell / 双击 | VS Code、Docker、Linux CLI；可选拉起 Windows `.exe` |
-| 安装 | `./install.sh` | [Releases](https://github.com/jawQ/app-timezone-launchers/releases/latest)（`*-macos.zip`） | `windows\install.ps1` | `windows/wsl/install.sh` |
+| 安装 | `./install.sh` | [Releases](https://github.com/jawQ/app-timezone-launchers/releases/latest)（优先 `*-macos.dmg`，或 `*-macos.zip`） | `windows\install.ps1` | `windows/wsl/install.sh` |
 | 文档 | 下文 | [App 概览](docs/app/overview.zh-CN.md) | [Windows](docs/windows/overview.zh-CN.md) | [WSL](docs/windows/wsl.zh-CN.md) |
 
 **大多数场景只装脚本即可**。macOS 需要图形界面时用 **[ZoneLaunch](docs/app/overview.zh-CN.md)**。
@@ -112,7 +112,7 @@ rm -f "$HOME/.local/bin/feishu-tz" "$HOME/.local/bin/wechat-tz"
 
 本平台发版压缩包：**`app-timezone-launchers-<version>-windows.zip`**（文件名与解压顶层目录均含 `-windows`）。
 
-macOS 应用包仍为：**`ZoneLaunch-<version>-macos.zip`**。
+macOS 应用资源仍为：**`ZoneLaunch-<version>-macos.dmg`**（推荐安装）与 **`ZoneLaunch-<version>-macos.zip`**（同时供应用内更新使用）。
 
 概览：[docs/windows/overview.zh-CN.md](docs/windows/overview.zh-CN.md)。
 

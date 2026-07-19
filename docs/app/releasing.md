@@ -37,7 +37,7 @@ Run from the **repository root**.
 | `npm run release:tag:dry-run` | Print the next auto tag and workflow URL; **no** tag, **no** push |
 | `npm run release:tag:test` | Self-test version helpers |
 | `npm run test:release-tag` | Same as `release:tag:test` |
-| `npm run release:package` | Local zip only via `package-release.sh` (optional version: `npm run release:package -- 0.1.1`) — **does not** create a GitHub Release |
+| `npm run release:package` | Local zip + dmg via `package-release.sh` (optional version: `npm run release:package -- 0.1.1`) — **does not** create a GitHub Release |
 | `npm run release:notes -- v0.1.2` | Preview **bilingual** release notes (EN + 中文) for a tag |
 
 Equivalent without npm:
@@ -97,12 +97,13 @@ Tags must look like `v1.2.3` (three numeric parts). The workflow matches `v*`.
 
 ## What gets published
 
+- `ZoneLaunch-<version>-macos.dmg` — **recommended** first install (open DMG, drag app to Applications)
 - `ZoneLaunch-<version>-macos.zip` — ad-hoc signed app; also used by the in-app updater
-- `appcast-macos.xml` — Sparkle feed with the Ed25519 signature for the macOS archive
+- `appcast-macos.xml` — Sparkle feed with the Ed25519 signature for the macOS zip
 - `app-timezone-launchers-<version>-windows.zip` — native CMD/PowerShell launchers + WSL helpers
 - `ZoneLaunch-cli-<version>-windows-amd64.zip` — Windows CLI for Intel/AMD PCs
 - `ZoneLaunch-cli-<version>-windows-arm64.zip` — Windows CLI for ARM/Snapdragon PCs
-- `SHA256SUMS` — checksums for all four platform archives
+- `SHA256SUMS` — checksums for all five platform archives
 - **Release notes (always both languages)**
   - English: Release page body (`RELEASE_NOTES.md`)
   - Chinese: top **[中文 →]** downloads the versioned `RELEASE_NOTES.zh-CN.md` asset
